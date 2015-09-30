@@ -1,0 +1,43 @@
+remove memory leaks
+
+remove redundant messages
+    the leader should not send a success if it has already been sent for that seqNo
+
+message loosing system test
+    create a messanger that looses a given percentage of messages
+
+message reordering system test
+    create a messanger that reorders messages for different members
+
+process killing system test
+    create a test that starts multiple VMs and kills the leader
+
+message fragmentation
+    UDP supports up to 64kb messages
+
+measure performance
+    create a proper performance test
+
+view changes
+    we need completely dynamic group membership
+    when a new member joins we must start the transition
+    during the transition messages are broadcast to the old view and the new view
+    during the transition the quorum is reached only if both the quorums of the old view and new view are reached
+    the transition is complete when all members of the old group have received the success message for all messages before the transition started
+    we might need to separate the concept of view from the messenger
+    what happens if there is another new view during the transition?
+
+
+
+
+persistent state?
+    do we need it?
+
+
+
+
+improvements beyond paxos
+    create autodiscovery service
+    create distributed hierarchical locking
+    create replicated data structures
+    create distributed data structures

@@ -1,0 +1,8 @@
+our state is given by
+P = {} // set of processes
+
+each process has a set of received messages
+
+    correctness criteria for for dynamic membership:
+        our
+        a joining process will receive a contiguous (no gaps) subsequence of messages
