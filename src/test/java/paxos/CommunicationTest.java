@@ -171,11 +171,6 @@ public class CommunicationTest {
         return senders;
     }
 
-    private void waitTillFinished(Thread[] threads) throws InterruptedException {
-        for (Thread t : threads) t.join();
-        Thread.sleep(300);
-    }
-
 
     public static class CalculatingReceiver implements Receiver {
 

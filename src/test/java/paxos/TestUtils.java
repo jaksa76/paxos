@@ -121,4 +121,9 @@ public class TestUtils {
         verify(messenger, atLeast(0)).groupSize();
         verifyNoMoreInteractions(messenger);
     }
+
+    public static void waitTillFinished(Thread[] threads) throws InterruptedException {
+        for (Thread t : threads) t.join();
+        Thread.sleep(300);
+    }
 }
