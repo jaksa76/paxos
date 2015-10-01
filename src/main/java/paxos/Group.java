@@ -69,4 +69,8 @@ public class Group {
         acceptorLogic.dispatch(message);
         failureDetector.dispatch(message);
     }
+
+    public int getPositionInGroup() {
+        return messenger.getPositionInGroup();
+    }
 }

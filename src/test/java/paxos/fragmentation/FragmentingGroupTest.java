@@ -49,22 +49,22 @@ public class FragmentingGroupTest {
     }
 
 
-    private FragmentingGroup.MessageFragment createMessageFragment(long id, int i, int parts) throws IOException {
+    private MessageFragment createMessageFragment(long id, int i, int parts) throws IOException {
         Serializable message = createMessageOfLength(parts * 100);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
         oos.writeObject(message);
         byte[] allBytes = baos.toByteArray();
         byte[] bytes = Arrays.copyOfRange(allBytes, i * 100, Math.min(i * 100 + 100, allBytes.length));
-        return new FragmentingGroup.MessageFragment(id, bytes, i, parts + 1);
+        return new MessageFragment(id, bytes, i, parts + 1);
     }
 
     private TypeSafeMatcher<Serializable> messageFragment(final int lenght) {
         return new CustomTypeSafeMatcher<Serializable>("message of lenght " + lenght) {
             @Override
             protected boolean matchesSafely(Serializable serializable) {
-                if (serializable instanceof FragmentingGroup.MessageFragment) {
-                    FragmentingGroup.MessageFragment messageFragment = (FragmentingGroup.MessageFragment) serializable;
+                if (serializable instanceof MessageFragment) {
+                    MessageFragment messageFragment = (MessageFragment) serializable;
                     return messageFragment.part.length == lenght;
                 }
                 return false;

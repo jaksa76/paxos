@@ -1,12 +1,9 @@
 package paxos;
 
-import com.sun.xml.internal.messaging.saaj.soap.Envelope;
-
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.net.*;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -18,13 +15,16 @@ public class UDPMessenger implements Messenger {
     private final DatagramSocket socket;
     private final DatagramPacket receivePacket;
     private final Member me;
+    private final int positionInGroup;
 
     public UDPMessenger(List<Member> members, int port) throws SocketException, UnknownHostException {
         this.members = members;
+        Collections.sort(members);
         this.socket = new DatagramSocket(port);
         socket.setReuseAddress(true);
         me = new Member(InetAddress.getLocalHost(), port);
         receivePacket = new DatagramPacket(new byte[BUFFER_SIZE], BUFFER_SIZE, socket.getLocalAddress(), port);
+        this.positionInGroup = findPositionInGroup(me, members);
     }
 
     public Serializable receive() throws IOException, ClassNotFoundException {
@@ -86,5 +86,16 @@ public class UDPMessenger implements Messenger {
 
     public void close() {
         socket.close();
+    }
+
+    public int getPositionInGroup() {
+        return positionInGroup;
+    }
+
+    public static int findPositionInGroup(Member me, List<Member> sortedMembers) {
+        for (int i = 0; i < sortedMembers.size(); i++) {
+            if (sortedMembers.get(i).equals(me)) return i;
+        }
+        throw new RuntimeException("Could not find " + me + " in " + sortedMembers.toString());
     }
 }

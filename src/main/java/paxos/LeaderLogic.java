@@ -89,12 +89,9 @@ public class LeaderLogic implements FailureListener {
     }
 
     private long newViewNumber() {
-        List<Member> orderedMembers = new ArrayList<Member>(messenger.getMembers());
-        Collections.sort(orderedMembers);
-        int myPositionInGroup = orderedMembers.indexOf(me);
-
-        long previousBallot = viewNumber/orderedMembers.size();
-        viewNumber = (previousBallot+1)*orderedMembers.size()+myPositionInGroup;
+        int groupSize = messenger.groupSize();
+        long previousBallot = viewNumber/groupSize;
+        viewNumber = (previousBallot+1)*groupSize + messenger.getPositionInGroup();
         return viewNumber;
     }
 

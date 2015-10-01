@@ -56,13 +56,4 @@ public class PaxosUtils {
         for (Long n : longs) max = Math.max(n, max);
         return max;
     }
-
-    public static int findPositionInGroup(Member me, List<Member> members) {
-        List<Member> sortedMembers = new ArrayList<Member>(members);
-        Collections.sort(sortedMembers);
-        for (int i = 0; i < sortedMembers.size(); i++) {
-            if (sortedMembers.get(i).equals(me)) return i;
-        }
-        throw new RuntimeException("Could not find " + me + " in " + members.toString());
-    }
 }

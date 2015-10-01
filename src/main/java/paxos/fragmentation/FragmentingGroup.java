@@ -5,46 +5,39 @@ import paxos.Messenger;
 import paxos.PaxosUtils;
 import paxos.Receiver;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class FragmentingGroup {
 
-    public static final double FRAGMENT_SIZE = 64000;
+    public static final int FRAGMENT_SIZE = 64000;
 
     private final Group group;
+    private final int myPositionInGroup;
+    private AtomicLong msgIdGen = new AtomicLong(0);
 
     public FragmentingGroup(Messenger messenger, Receiver receiver) throws IOException {
-        this(new Group(messenger, new JoinerReceiver(receiver)));
+        this(new Group(new FragmentingMessenger(messenger), new JoinerReceiver(receiver)));
     }
 
     FragmentingGroup(Group group) throws IOException {
         this.group = group;
+        this.myPositionInGroup = group.getPositionInGroup();
     }
 
     public void broadcast(Serializable message) throws IOException {
-        MessageFragment[] fragments = performFragmentation(message, message.hashCode());
+        long messageId = createMsgId(message);
+        MessageFragment[] fragments = FragmentationUtils.performFragmentation(message, messageId, FRAGMENT_SIZE);
         for (int i = 0; i < fragments.length; i++) {
             group.broadcast(fragments[i]);
         }
     }
 
-    private MessageFragment[] performFragmentation(Serializable message, long msgId) {
-        byte[] bytes = PaxosUtils.serialize(message);
-        MessageFragment[] fragments = new MessageFragment[(int) Math.ceil(bytes.length/FRAGMENT_SIZE)];
-        for (int i = 0; i < fragments.length; i++) {
-            int offset = (int) (i*FRAGMENT_SIZE);
-            int remainingBytes = bytes.length - offset;
-            int fragmentLength = (int) Math.min(remainingBytes, FRAGMENT_SIZE);
-            byte[] fragmentBytes = new byte[fragmentLength];
-            System.arraycopy(bytes, offset, fragmentBytes, 0, fragmentLength);
-            fragments[i] = new MessageFragment(msgId, fragmentBytes, i, fragments.length);
-        }
-        return fragments;
+    private long createMsgId(Serializable message) {
+        return myPositionInGroup * 1000000l + msgIdGen.incrementAndGet();
     }
 
     static class JoinerReceiver implements Receiver {
@@ -71,60 +64,6 @@ public class FragmentingGroup {
             }
         }
 
-        static class FragmentCollector {
-            private final byte[][] parts;
-            private int partsReceived = 0;
-
-            public FragmentCollector(int parts) {
-                this.parts = new byte[parts][];
-            }
-
-            public void addPart(int partNo, byte[] bytes) {
-                parts[partNo] = bytes;
-                partsReceived++;
-            }
-
-            public boolean isComplete() {
-                return partsReceived == parts.length;
-            }
-
-            public Serializable extractMessage() {
-                try {
-                    int totalBytes = 0;
-                    for (int i = 0; i < parts.length; i++) totalBytes += parts[i].length;
-
-                    byte[] concatenated = new byte[totalBytes];
-                    int cursor = 0;
-                    for (int i = 0; i < parts.length; i++) {
-                        System.arraycopy(parts[i], 0, concatenated, cursor, parts[i].length);
-                        cursor += parts[i].length;
-                    }
-
-                    ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(concatenated));
-                    return (Serializable) ois.readObject();
-                } catch (Exception e) {
-                    throw new RuntimeException("Could not deserialize concatenated message", e);
-                }
-            }
-        }
     }
 
-    static class MessageFragment implements Serializable {
-        long id;
-        byte[] part;
-        int fragmentNo;
-        int totalFragments;
-
-        public MessageFragment(long id, byte[] part, int fragmentNo, int totalFragments) {
-            this.id = id;
-            this.part = part;
-            this.fragmentNo = fragmentNo;
-            this.totalFragments = totalFragments;
-        }
-
-        @Override
-        public String toString() {
-            return "message fragment " + (fragmentNo+1) + "/" + totalFragments + " len: " + part.length;
-        }
-    }
 }

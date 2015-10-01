@@ -26,7 +26,7 @@ public class AcceptorLogic {
         this.messenger = Messenger;
         this.receiver = new BufferedReceiver(receiver);
         this.me = messenger.getUID();
-        this.myPositionInGroup = PaxosUtils.findPositionInGroup(me, messenger.getMembers());
+        this.myPositionInGroup = messenger.getPositionInGroup();
     }
 
     public void broadcast(Serializable message) {

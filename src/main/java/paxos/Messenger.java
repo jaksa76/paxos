@@ -19,4 +19,6 @@ public interface Messenger {
     List<Member> getMembers();
 
     void close();
+
+    int getPositionInGroup();
 }
