@@ -1,8 +1,22 @@
 our state is given by
-P = {} // set of processes
+P : { p : process } - set of processes
 
 each process has a set of received messages
+each process may broadcast a message
 
-    correctness criteria for for dynamic membership:
-        our
-        a joining process will receive a contiguous (no gaps) subsequence of messages
+MS : { <m, p> : m - message, p - sender process} - messages sent
+MR : { <s, m, p> : s - sequence number, m - message, p - receiving process } - messages received
+
+
+correctness criteria for for dynamic membership:
+    every process will have a contiguous sub-sequence of all messages that have been received by at least one process
+    every subsequence of messages received by a process will start with a welcome message
+    if a process receved messages p and q, with seq numbers sp and sq then that process has received all messages with sequence numbers between sp and sq
+    a process will never recieve a message with a seq no n+1 that is not a welcome message if it hasn't received the message with seq no n
+
+a leader must know if any message has been accepted by previous leaders
+
+
+a process will not accept a message that is not chosen
+a process will not accept two messages for the same seq#
+a leader will never broadcast success for a message that is not chosen

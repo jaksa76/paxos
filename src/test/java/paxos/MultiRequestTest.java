@@ -17,7 +17,7 @@ public class MultiRequestTest {
     @Test
     public void testSendingAndReplying() throws Exception {
         List<Member> members = TestUtils.createMembersOnLocalhost(3);
-        Messenger messenger = TestUtils.createMock(members.get(0), members);
+        Messenger messenger = TestUtils.createMock(members, 0);
         final boolean[] quorumReached = new boolean[] {false};
         final boolean[] completed = new boolean[] {false};
 
@@ -54,7 +54,7 @@ public class MultiRequestTest {
     @Test
     public void testFilteringWrongMessages() throws Exception {
         List<Member> members = TestUtils.createMembersOnLocalhost(3);
-        Messenger messenger = TestUtils.createMock(members.get(0), members);
+        Messenger messenger = TestUtils.createMock(members, 0);
         final boolean[] quorumReached = new boolean[] {false};
         final boolean[] completed = new boolean[] {false};
 
@@ -85,7 +85,7 @@ public class MultiRequestTest {
     @Test
     public void testResending() throws Exception {
         List<Member> members = TestUtils.createMembersOnLocalhost(3);
-        Messenger messenger = TestUtils.createMock(members.get(0), members);
+        Messenger messenger = TestUtils.createMock(members, 0);
         final boolean[] quorumReached = new boolean[] {false};
         final boolean[] completed = new boolean[] {false};
 

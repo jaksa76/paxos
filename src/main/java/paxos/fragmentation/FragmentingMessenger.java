@@ -30,7 +30,7 @@ public class FragmentingMessenger implements Messenger {
         this.messenger = msngr;
         this.myPositionInGroup = messenger.getPositionInGroup();
 
-        // get stuff from the udp messenger and collects the framents
+        // get stuff from the udp messenger and collects the fragments
         new Thread() {
             @Override
             public void run() {

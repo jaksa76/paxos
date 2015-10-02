@@ -20,7 +20,6 @@ public class LeaderLogic implements FailureListener {
     private long viewNumber = 0;
     private long seqNo = 0;
     private boolean iAmElected = false;
-    private Member leader;
 
     public LeaderLogic(Messenger messenger) throws UnknownHostException {
         this(messenger, new DefaultTimeProvider());
@@ -31,7 +30,7 @@ public class LeaderLogic implements FailureListener {
         this.messenger = messenger;
         this.timeProvider = timeProvider;
         this.me = messenger.getUID();
-        this.leader = PaxosUtils.selectLeader(messenger.getMembers());
+        Member leader = PaxosUtils.selectLeader(messenger.getMembers());
         if (leader.equals(me)) {
             assistants.add(new Election(messenger, timeProvider.getTime(), viewNumber + newViewNumber()));
         }

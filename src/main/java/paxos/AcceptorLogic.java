@@ -18,7 +18,7 @@ public class AcceptorLogic {
     private Member leader;
     private long viewNumber;
     private long tail = -1; // we have received SUCCESS for all messages before tail
-    private Set<Long> undelivered = new HashSet<Long>(); // undeliverd SUCCESSFULL messages
+    private Set<Long> undelivered = new HashSet<Long>(); // undelivered SUCCESSFUL messages
     private AtomicLong msgIdGen = new AtomicLong(0);
 
 
@@ -27,16 +27,17 @@ public class AcceptorLogic {
         this.receiver = new BufferedReceiver(receiver);
         this.me = messenger.getUID();
         this.myPositionInGroup = messenger.getPositionInGroup();
+        this.leader = me;
     }
 
     public void broadcast(Serializable message) {
         long msgId = createMsgId(message);
-        boolean broadcastSuccessfull = false;
+        boolean broadcastSuccessful = false;
         try {
-            while (!broadcastSuccessfull) {
+            while (!broadcastSuccessful) {
 //                System.out.println("sending request to " + leader);
                 messenger.send(new BroadcastRequest(message, msgId), leader);
-                broadcastSuccessfull = waitingForResponse.waitALittle(msgId);
+                broadcastSuccessful = waitingForResponse.waitALittle(msgId);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();

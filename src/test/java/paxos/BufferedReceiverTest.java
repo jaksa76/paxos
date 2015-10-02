@@ -9,7 +9,7 @@ import static org.junit.Assert.*;
 
 public class BufferedReceiverTest {
     @Test
-    public void testReceingingFirstMessage() throws Exception {
+    public void testReceivingFirstMessage() throws Exception {
         Receiver receiver = Mockito.mock(Receiver.class);
 
         BufferedReceiver bufferedReceiver = new BufferedReceiver(receiver);

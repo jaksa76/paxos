@@ -7,7 +7,7 @@ import java.io.Serializable;
 public interface SpecialMessage extends Serializable {
     MessageType getMessageType();
 
-    public static enum MessageType {
+    enum MessageType {
         BROADCAST_REQ,
         BROADCAST,
         ACCEPT,

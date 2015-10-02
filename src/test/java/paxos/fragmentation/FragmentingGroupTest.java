@@ -59,13 +59,13 @@ public class FragmentingGroupTest {
         return new MessageFragment(id, bytes, i, parts + 1);
     }
 
-    private TypeSafeMatcher<Serializable> messageFragment(final int lenght) {
-        return new CustomTypeSafeMatcher<Serializable>("message of lenght " + lenght) {
+    private TypeSafeMatcher<Serializable> messageFragment(final int length) {
+        return new CustomTypeSafeMatcher<Serializable>("message of length " + length) {
             @Override
             protected boolean matchesSafely(Serializable serializable) {
                 if (serializable instanceof MessageFragment) {
                     MessageFragment messageFragment = (MessageFragment) serializable;
-                    return messageFragment.part.length == lenght;
+                    return messageFragment.part.length == length;
                 }
                 return false;
             }

@@ -19,7 +19,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static paxos.TestUtils.*;
 
-public class CommunicationTest {
+public class CommunicationIntegrationTest {
     private final Set<Group> groups = new HashSet<Group>();
 
     @After public void tearDown() throws InterruptedException {
@@ -173,12 +173,11 @@ public class CommunicationTest {
 
 
     public static class CalculatingReceiver implements Receiver {
-
         public double value = 1.0;
         public long messages = 0l;
         private long start = System.currentTimeMillis();
-        public synchronized void receive(Serializable messsage) {
-            if (messsage.equals("+1")) value += 1.0;
+        public synchronized void receive(Serializable message) {
+            if (message.equals("+1")) value += 1.0;
             else value *= 1.01;
             messages++;
             if (messages % 10000 == 0) {
@@ -187,20 +186,18 @@ public class CommunicationTest {
                 System.out.println("speed " + ((float) messages) / delta * 1000.0);
             }
         }
-
     }
-    public static class CountingReceiver implements Receiver {
 
+    public static class CountingReceiver implements Receiver {
         public long msgCount = 0l;
         public List<String> messages = new ArrayList<String>();
         public synchronized void receive(Serializable message) {
             msgCount++;
             messages.add((String) message);
         }
-
     }
-    private static class Sender extends Thread {
 
+    private static class Sender extends Thread {
         private final int i;
         private final Group endpoint;
         public Sender(int i, Group endpoint) {
@@ -217,10 +214,9 @@ public class CommunicationTest {
                 } catch (Exception e) { e.printStackTrace(); }
             }
         }
-
     }
-    private static class CalculatingSender extends Thread {
 
+    private static class CalculatingSender extends Thread {
         private final Group endpoint;
         public CalculatingSender(Group endpoint) {
             this.endpoint = endpoint;
@@ -229,14 +225,12 @@ public class CommunicationTest {
         @Override
         public void run() {
             for (int i = 0; i < 1000; i++) {
-                try {
-                    Serializable messageToSend = random() < .5 ? "+1" : "*2";
-                    endpoint.broadcast(messageToSend);
-                } catch (IOException e) { e.printStackTrace(); }
+                Serializable messageToSend = random() < .5 ? "+1" : "*2";
+                endpoint.broadcast(messageToSend);
             }
         }
-
     }
+
     private void findDuplicates(List<String> messages) {
         Set<String> messagesFound = new HashSet<String>();
         if (messages.size() != 5000) {

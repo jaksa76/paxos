@@ -31,9 +31,13 @@ public class FragmentingGroup {
     public void broadcast(Serializable message) throws IOException {
         long messageId = createMsgId(message);
         MessageFragment[] fragments = FragmentationUtils.performFragmentation(message, messageId, FRAGMENT_SIZE);
-        for (int i = 0; i < fragments.length; i++) {
-            group.broadcast(fragments[i]);
+        for (MessageFragment fragment : fragments) {
+            group.broadcast(fragment);
         }
+    }
+
+    public void close() {
+        group.close();
     }
 
     private long createMsgId(Serializable message) {
@@ -48,9 +52,9 @@ public class FragmentingGroup {
             this.receiver = receiver;
         }
 
-        public void receive(Serializable messsage) {
-            if (messsage instanceof MessageFragment) {
-                MessageFragment messageFragment = (MessageFragment) messsage;
+        public void receive(Serializable message) {
+            if (message instanceof MessageFragment) {
+                MessageFragment messageFragment = (MessageFragment) message;
                 if (!collectors.containsKey(messageFragment.id)) {
                     collectors.put(messageFragment.id, new FragmentCollector(messageFragment.totalFragments));
                 }

@@ -21,8 +21,8 @@ class FragmentCollector {
         if (partsReceived < parts.length) return false; // this is just an optimisation
 
         // we still need this if we received the same message twice
-        for (int i = 0; i < parts.length; i++) {
-            if (parts[i] == null) return false;
+        for (byte[] part : parts) {
+            if (part == null) return false;
         }
         return true;
     }
@@ -30,13 +30,13 @@ class FragmentCollector {
     public Serializable extractMessage() {
         try {
             int totalBytes = 0;
-            for (int i = 0; i < parts.length; i++) totalBytes += parts[i].length;
+            for (byte[] part : parts) totalBytes += part.length;
 
             byte[] concatenated = new byte[totalBytes];
             int cursor = 0;
-            for (int i = 0; i < parts.length; i++) {
-                System.arraycopy(parts[i], 0, concatenated, cursor, parts[i].length);
-                cursor += parts[i].length;
+            for (byte[] part : parts) {
+                System.arraycopy(part, 0, concatenated, cursor, part.length);
+                cursor += part.length;
             }
 
             ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(concatenated));

@@ -89,7 +89,6 @@ public abstract class MultiRequest<T extends Serializable, R extends MessageWith
      * All messages are forwarded to this method.
      *
      * @param message
-     * @return true if the finish() method has been invoked.
      */
     final public void receive(Serializable message) {
         R resp = filterResponse(message);

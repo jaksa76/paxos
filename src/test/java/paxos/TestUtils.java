@@ -25,11 +25,12 @@ public class TestUtils {
         return list;
     }
 
-    public static Messenger createMock(Member me, List<Member> members) throws UnknownHostException {
+    public static Messenger createMock(List<Member> members, int i) throws UnknownHostException {
         Messenger messenger = mock(Messenger.class);
-        Mockito.when(messenger.getUID()).thenReturn(me);
-        Mockito.when(messenger.getMembers()).thenReturn(members);
-        Mockito.when(messenger.groupSize()).thenReturn(members.size());
+        when(messenger.getUID()).thenReturn(members.get(i));
+        when(messenger.getMembers()).thenReturn(members);
+        when(messenger.groupSize()).thenReturn(members.size());
+        when(messenger.getPositionInGroup()).thenReturn(i);
         return messenger;
     }
 
@@ -109,9 +110,7 @@ public class TestUtils {
 
     public static <T> Set<T> asSet(T... elements) {
         HashSet<T> set = new HashSet<T>();
-        for (T element : elements) {
-            set.add(element);
-        }
+        Collections.addAll(set, elements);
         return set;
     }
 
@@ -119,6 +118,7 @@ public class TestUtils {
         verify(messenger, atLeast(0)).getUID();
         verify(messenger, atLeast(0)).getMembers();
         verify(messenger, atLeast(0)).groupSize();
+        verify(messenger, atLeast(0)).getPositionInGroup();
         verifyNoMoreInteractions(messenger);
     }
 

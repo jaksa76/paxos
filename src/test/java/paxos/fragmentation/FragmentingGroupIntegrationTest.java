@@ -1,5 +1,6 @@
 package paxos.fragmentation;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import paxos.Group;
@@ -19,12 +20,21 @@ import static paxos.TestUtils.*;
 public class FragmentingGroupIntegrationTest {
     private final Set<FragmentingGroup> groups = new HashSet<FragmentingGroup>();
     private static final byte[] MESSAGE_TO_SEND = createMessageOfLength(64000*3+100);
+//    private static final byte[] MESSAGE_TO_SEND = createMessageOfLength(100000);
+    private static final int MESSAGES_TO_SEND = 10;
+    private static final int GROUP_SIZE = 10;
+
+    @After
+    public void tearDown() {
+        for (FragmentingGroup group : groups) {
+            group.close();
+        }
+    }
 
     @Test
     public void testTransmittingLongMessages() throws Exception {
-        int groupSize = 5;
-        List<Member> members = createMembersOnLocalhost(groupSize);
-        Receiver[] receivers = createReceivers(groupSize);
+        List<Member> members = createMembersOnLocalhost(GROUP_SIZE);
+        Receiver[] receivers = createReceivers(GROUP_SIZE);
         FragmentingGroup[] endpoints = createEndpoints(members, receivers);
 
         long start = System.currentTimeMillis();
@@ -34,13 +44,14 @@ public class FragmentingGroupIntegrationTest {
 
         double delta = (System.currentTimeMillis() - start) / 1000.0; // in seconds
         System.out.println("time taken: " + delta);
-        System.out.println("req/s: " + (50.0 / delta));
+        System.out.println("req/s: " + (MESSAGES_TO_SEND * GROUP_SIZE / delta));
 
         for (Receiver receiver : receivers) {
             CountingReceiver countingReceiver = (CountingReceiver) receiver;
-            Assert.assertEquals(50, countingReceiver.msgCount);
+            Assert.assertEquals(MESSAGES_TO_SEND * GROUP_SIZE, countingReceiver.msgCount);
         }
     }
+
 
     private FragmentingGroup[] createEndpoints(List<Member> members, Receiver[] receivers) throws IOException, InterruptedException {
         final FragmentingGroup[] endpoints = new FragmentingGroup[members.size()];
@@ -79,7 +90,7 @@ public class FragmentingGroupIntegrationTest {
 
         @Override
         public void run() {
-            for (int j = 0; j < 10; j++) {
+            for (int j = 0; j < MESSAGES_TO_SEND; j++) {
                 try {
 
                     endpoint.broadcast(MESSAGE_TO_SEND);
@@ -91,7 +102,7 @@ public class FragmentingGroupIntegrationTest {
 
     private void findDuplicates(List<String> messages) {
         Set<String> messagesFound = new HashSet<String>();
-        if (messages.size() != 50) {
+        if (messages.size() != MESSAGES_TO_SEND * GROUP_SIZE) {
             // find duplicate
             for (String msg : messages) {
                 if (messagesFound.contains(msg)) {

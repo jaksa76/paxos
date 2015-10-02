@@ -1,12 +1,9 @@
 package paxos;
 
-import paxos.messages.*;
-
-import java.io.*;
-import java.util.concurrent.Semaphore;
+import java.io.IOException;
+import java.io.Serializable;
 
 public class Group {
-    private final Member me;
     private final AcceptorLogic acceptorLogic;
     private final LeaderLogic leaderLogic;
     private final Messenger messenger;
@@ -17,7 +14,6 @@ public class Group {
 
     public Group(Messenger messenger, Receiver receiver) throws IOException {
         this.messenger = messenger;
-        this.me = messenger.getUID();
 
         leaderLogic = new LeaderLogic(messenger);
         acceptorLogic = new AcceptorLogic(messenger, receiver);
@@ -53,7 +49,7 @@ public class Group {
         }.start();
     }
 
-    public void broadcast(Serializable message) throws IOException {
+    public void broadcast(Serializable message) {
         acceptorLogic.broadcast(message);
     }
 

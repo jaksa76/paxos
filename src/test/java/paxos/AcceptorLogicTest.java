@@ -18,7 +18,7 @@ public class AcceptorLogicTest {
     @Test
     public void testStandardPath() throws Exception {
         List<Member> members = asList(localMember(2440), localMember(2441));
-        Messenger messenger = createMock(members.get(0), members);
+        Messenger messenger = createMock(members, 0);
         Receiver receiver = mock(Receiver.class);
         Member leader = members.get(1);
         long viewNo = 1;
@@ -48,7 +48,7 @@ public class AcceptorLogicTest {
     @Test
     public void testConsecutiveMessages() throws Exception {
         List<Member> members = asList(localMember(2440), localMember(2441));
-        Messenger messenger = createMock(members.get(0), members);
+        Messenger messenger = createMock(members, 0);
         Receiver receiver = mock(Receiver.class);
         Member leader = members.get(1);
         long viewNo = 1;
@@ -82,7 +82,7 @@ public class AcceptorLogicTest {
         String message1 = "hello";
         String message2 = "hi";
         List<Member> members = TestUtils.createMembersOnLocalhost(3);
-        Messenger messenger = createMock(members.get(0), members);
+        Messenger messenger = createMock(members, 0);
         Receiver receiver = mock(Receiver.class);
         Member leader = members.get(1);
         long view1 = 1, view2 = 2;
@@ -116,7 +116,7 @@ public class AcceptorLogicTest {
     @Test
     public void testCatchingUpMissingSuccessMessages() throws Exception {
         List<Member> members = asList(localMember(2440), localMember(2441));
-        Messenger messenger = createMock(members.get(0), members);
+        Messenger messenger = createMock(members, 0);
         Receiver receiver = mock(Receiver.class);
         Member leader = members.get(1);
         long viewNo = 1;

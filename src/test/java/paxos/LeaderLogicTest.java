@@ -14,6 +14,7 @@ import static org.mockito.Mockito.*;
 import static paxos.TestUtils.*;
 import static paxos.messages.SpecialMessage.MessageType.*;
 
+@SuppressWarnings("ALL")
 public class LeaderLogicTest {
 
     public static final Serializable NO_OP = new NoOp();
@@ -26,7 +27,7 @@ public class LeaderLogicTest {
     @Test
     public void testSimplePath() throws Exception {
         members = TestUtils.createMembersOnLocalhost(2);
-        messenger = createMock(members.get(1), members);
+        messenger = createMock(members, 1);
         long viewNo = 3l;
         long seqNo = 0l;
         long msgId = 1l;
@@ -51,7 +52,7 @@ public class LeaderLogicTest {
     @Test
     public void testNotTakingLeadershipIfNotHighest() throws Exception {
         members = TestUtils.createMembersOnLocalhost(2);
-        messenger = createMock(members.get(0), members);
+        messenger = createMock(members, 0);
 
         leader = new LeaderLogic(messenger);
         verifyNoMoreCommunication(messenger);
@@ -112,7 +113,7 @@ public class LeaderLogicTest {
     @Test
     public void testTakingOver() throws Exception {
         members = TestUtils.createMembersOnLocalhost(3);
-        Messenger messenger2 = createMock(members.get(1), members);
+        Messenger messenger2 = createMock(members, 1);
         long newViewNo = 4;
         long msgId1 = 1l, msgId2 = 20;
 
@@ -149,7 +150,7 @@ public class LeaderLogicTest {
     @Test
     public void testTakingOver2() throws Exception {
         members = TestUtils.createMembersOnLocalhost(3);
-        Messenger messenger2 = createMock(members.get(1), members);
+        Messenger messenger2 = createMock(members, 1);
         long newViewNo = 4;
         long msgId1 = 1l, msgId2 = 20;
 
@@ -177,7 +178,7 @@ public class LeaderLogicTest {
     @Test
     public void testBeingTakenOver() throws Exception {
         members = TestUtils.createMembersOnLocalhost(3);
-        Messenger messenger2 = createMock(members.get(1), members);
+        Messenger messenger2 = createMock(members, 1);
 
         LeaderLogic newLeader = new LeaderLogic(messenger2);
 
@@ -199,7 +200,7 @@ public class LeaderLogicTest {
     @Test
     public void testTakingOverWithMorePredecessors() throws Exception {
         List<Member> members = TestUtils.createMembersOnLocalhost(4);
-        Messenger messenger = createMock(members.get(2), members);
+        Messenger messenger = createMock(members, 2);
         long newViewNo = 6;
         long msgId1 = 10, msgId2 = 20;
 
@@ -293,7 +294,7 @@ public class LeaderLogicTest {
 
     private void createGroup(int size) throws UnknownHostException {
         members = createMembersOnLocalhost(size);
-        messenger = createMock(members.get(size-1), members);
+        messenger = createMock(members, size-1);
         viewNo = (size*2)-1;
 
         leader = new LeaderLogic(messenger, timeProvider);

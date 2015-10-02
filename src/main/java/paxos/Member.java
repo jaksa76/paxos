@@ -1,5 +1,7 @@
 package paxos;
 
+import com.sun.istack.internal.NotNull;
+
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.Arrays;
@@ -25,7 +27,7 @@ public class Member implements Comparable<Member>, Serializable {
         return port;
     }
 
-    public int compareTo(Member other) {
+    public int compareTo(@NotNull Member other) {
         // not using a loop for performance reasons
         if (this.addressBytes[0] < other.addressBytes[0]) return -1;
         if (this.addressBytes[0] > other.addressBytes[0]) return 1;
