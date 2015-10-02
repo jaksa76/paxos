@@ -11,6 +11,7 @@ MR : { <s, m, p> : s - sequence number, m - message, p - receiving process } - m
 correctness criteria for for dynamic membership:
     every process will have a contiguous sub-sequence of all messages that have been received by at least one process
     every subsequence of messages received by a process will start with a welcome message
+
     if a process receved messages p and q, with seq numbers sp and sq then that process has received all messages with sequence numbers between sp and sq
     a process will never recieve a message with a seq no n+1 that is not a welcome message if it hasn't received the message with seq no n
 
@@ -20,3 +21,50 @@ a leader must know if any message has been accepted by previous leaders
 a process will not accept a message that is not chosen
 a process will not accept two messages for the same seq#
 a leader will never broadcast success for a message that is not chosen
+
+
+
+ alg1:
+
+ a new process that wants to join asks a member for the view
+ the new process sends the join requst to the last known leader
+ the leader r_atomically broadcasts the NEW_MEMBER message
+ upon receiving the SUCCESS message for all the messages up to and including the NEW_MEMBER message
+    every other member updates its messenger members
+
+ if the new process does not receive a welcome message it will ask a random member from the last received view
+ for a new view and send the join request to the leader of that view
+
+ alg2:
+    upon receiving a JOIN message the leader will send a QUIT message to all other members
+    when the QUIT message is chosen, no other message will be chosen afterwards (for that group)
+    when a member receives the SUCCESS of a QUIT it will not accept any more messages (for that group)
+
+    if a leader receives a B_REQ for a QUIT it will not propose any B_REQ afterwards
+    no leader will propose a message after proposing a QUIT
+
+    if a leader receives a view_accept with a QUIT, the leader will not accept any BC_REQ
+        for every message in the VIEW_ACCEPT whose seq# is higher than seqNo(QUIT) the message was
+           proposed by a different leader than the QUIT
+           not accepted
+
+    can a message m1 be accepted and a QUIT accepted where seqNo(QUIT) < seqNo(m1) by the same member?
+        the leaders of m1 and QUIT must have been different processes
+        m1 must have been received by the process before the QUIT
+            if leader(m1) is > leader(QUIT)
+                if QUIT was chosen leader(m1) would know it and thus would not have sent m1
+                it follows that QUIT was not chosen
+            if leader(QUIT) > leader(m1)
+                if m1 was chosen then leader(QUIT) would know about it and would not sent QUIT before m1, but after
+                if follows that m1 was not chosen
+                if follows that no process has received the SUCCESS of m1
+                it follows that it is safe not to deliver m1
+
+
+
+
+    no member will deliver a message after delivering a QUIT
+
+    every member whom the QUIT message is delivered, will join the new group specified in the QUIT message
+
+
