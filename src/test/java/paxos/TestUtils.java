@@ -6,6 +6,8 @@ import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import paxos.messages.Accept;
 import paxos.messages.Accepted;
 import paxos.messages.NewView;
@@ -25,22 +27,18 @@ public class TestUtils {
         return list;
     }
 
-    public static Messenger createMock(List<Member> members, int i) throws UnknownHostException {
-        Messenger messenger = mock(Messenger.class);
-        when(messenger.getUID()).thenReturn(members.get(i));
-        when(messenger.getMembers()).thenReturn(members);
-        when(messenger.groupSize()).thenReturn(members.size());
-        when(messenger.getPositionInGroup()).thenReturn(i);
-        return messenger;
+    public static GroupMembership createMembership(List<Member> members, int n) {
+        return new GroupMembership(members, members.get(n));
     }
 
     public static Member localMember(int port) throws UnknownHostException {
         return new Member(InetAddress.getLocalHost(), port);
     }
 
-    public static Serializable specialMessage(final SpecialMessage.MessageType messageType) {
-        return Matchers.argThat(new TypeSafeMatcher<Serializable>() {
-            protected boolean matchesSafely(Serializable message) {
+    public static byte[] specialMessage(final SpecialMessage.MessageType messageType) {
+        return Matchers.argThat(new TypeSafeMatcher<byte[]>() {
+            protected boolean matchesSafely(byte[] bytes) {
+                Serializable message = (Serializable) PaxosUtils.deserialize(bytes);
                 if (message instanceof SpecialMessage) {
                     SpecialMessage specialMessage = (SpecialMessage) message;
                     return specialMessage.getMessageType() == messageType;
@@ -54,12 +52,13 @@ public class TestUtils {
         });
     }
 
-    public static Serializable acceptMessage(final long seqNo, final Serializable msg) {
-        return Matchers.argThat(new TypeSafeMatcher<Serializable>() {
+    public static byte[] acceptMessage(final long seqNo, final Serializable msg) {
+        return Matchers.argThat(new TypeSafeMatcher<byte[]>() {
             @Override
-            protected boolean matchesSafely(Serializable serializable) {
-                if (serializable instanceof Accept) {
-                    Accept accept = (Accept) serializable;
+            protected boolean matchesSafely(byte[] bytes) {
+                Serializable message = (Serializable) PaxosUtils.deserialize(bytes);
+                if (message instanceof Accept) {
+                    Accept accept = (Accept) message;
                     return accept.seqNo == seqNo && msg.equals(accept.message);
                 }
                 return false;
@@ -71,12 +70,13 @@ public class TestUtils {
         });
     }
 
-    public static Serializable newView(final long viewNo) {
-        return Matchers.argThat(new TypeSafeMatcher<Serializable>() {
+    public static byte[] newView(final long viewNo) {
+        return Matchers.argThat(new TypeSafeMatcher<byte[]>() {
             @Override
-            protected boolean matchesSafely(Serializable serializable) {
-                if (serializable instanceof NewView) {
-                    NewView newView = (NewView) serializable;
+            protected boolean matchesSafely(byte[] bytes) {
+                Serializable message = (Serializable) PaxosUtils.deserialize(bytes);
+                if (message instanceof NewView) {
+                    NewView newView = (NewView) message;
                     return newView.viewNumber == viewNo;
                 }
                 return false;
@@ -88,9 +88,10 @@ public class TestUtils {
         });
     }
 
-    public static Serializable acceptedMessageWithMissingList(final long... seqNos) {
-        return Matchers.argThat(new TypeSafeMatcher<Serializable>() {
-            protected boolean matchesSafely(Serializable message) {
+    public static byte[] acceptedMessageWithMissingList(final long... seqNos) {
+        return Matchers.argThat(new TypeSafeMatcher<byte[]>() {
+            protected boolean matchesSafely(byte[] bytes) {
+                Serializable message = (Serializable) PaxosUtils.deserialize(bytes);
                 if (message instanceof Accepted) {
                     Accepted accepted = (Accepted) message;
                     if (seqNos.length != accepted.missingSuccess.size()) return false;
@@ -114,16 +115,16 @@ public class TestUtils {
         return set;
     }
 
-    public static void verifyNoMoreCommunication(Messenger messenger) throws UnknownHostException {
-        verify(messenger, atLeast(0)).getUID();
-        verify(messenger, atLeast(0)).getMembers();
-        verify(messenger, atLeast(0)).groupSize();
-        verify(messenger, atLeast(0)).getPositionInGroup();
-        verifyNoMoreInteractions(messenger);
-    }
-
     public static void waitTillFinished(Thread[] threads) throws InterruptedException {
         for (Thread t : threads) t.join();
         Thread.sleep(300);
+    }
+
+    public static class ArgCaptor<T> implements Answer {
+        public T arg;
+        public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+            arg = (T) invocationOnMock.getArguments()[0];
+            return null;
+        }
     }
 }

@@ -1,13 +1,12 @@
 package paxos.fragmentation;
 
-import paxos.Group;
-import paxos.Messenger;
-import paxos.PaxosUtils;
-import paxos.Receiver;
+import paxos.*;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -19,18 +18,23 @@ public class FragmentingGroup {
     private final int myPositionInGroup;
     private AtomicLong msgIdGen = new AtomicLong(0);
 
-    public FragmentingGroup(Messenger messenger, Receiver receiver) throws IOException {
-        this(new Group(new FragmentingMessenger(messenger), new JoinerReceiver(receiver)));
+
+    public FragmentingGroup(GroupMembership membership, CommLayer layer, Receiver receiver) {
+        this.group = new Group(membership, new FragmentingMessenger(layer), new JoinerReceiver(receiver));
+        this.myPositionInGroup = membership.getPositionInGroup();
     }
 
-    FragmentingGroup(Group group) throws IOException {
+    // for testing
+    FragmentingGroup(Group group, int position) {
         this.group = group;
-        this.myPositionInGroup = group.getPositionInGroup();
+        this.myPositionInGroup = position;
     }
+
 
     public void broadcast(Serializable message) throws IOException {
         long messageId = createMsgId(message);
-        MessageFragment[] fragments = FragmentationUtils.performFragmentation(message, messageId, FRAGMENT_SIZE);
+        byte[] bytes = PaxosUtils.serialize(message);
+        MessageFragment[] fragments = FragmentationUtils.performFragmentation(bytes, messageId, FRAGMENT_SIZE);
         for (MessageFragment fragment : fragments) {
             group.broadcast(fragment);
         }
@@ -63,11 +67,9 @@ public class FragmentingGroup {
 
                 if (collector.isComplete()) {
                     collectors.remove(messageFragment.id);
-                    receiver.receive(collector.extractMessage());
+                    if (receiver != null) receiver.receive((Serializable) PaxosUtils.deserialize(collector.extractMessage()));
                 }
             }
         }
-
     }
-
 }

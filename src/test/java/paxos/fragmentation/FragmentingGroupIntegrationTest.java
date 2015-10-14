@@ -3,6 +3,7 @@ package paxos.fragmentation;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 import paxos.Group;
 import paxos.Member;
 import paxos.Receiver;
@@ -10,11 +11,12 @@ import paxos.UDPMessenger;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.verify;
 import static paxos.TestUtils.*;
 
 public class FragmentingGroupIntegrationTest {
@@ -22,13 +24,50 @@ public class FragmentingGroupIntegrationTest {
     private static final byte[] MESSAGE_TO_SEND = createMessageOfLength(64000*3+100);
 //    private static final byte[] MESSAGE_TO_SEND = createMessageOfLength(100000);
     private static final int MESSAGES_TO_SEND = 10;
-    private static final int GROUP_SIZE = 10;
+    private static final int GROUP_SIZE = 3;
 
     @After
     public void tearDown() {
         for (FragmentingGroup group : groups) {
             group.close();
         }
+    }
+
+
+    @Test
+    public void testTransmittingShortMessage() throws Exception {
+        Receiver receiver = Mockito.mock(Receiver.class);
+        List<Member> members = createMembersOnLocalhost(3);
+        FragmentingGroup group1 = new FragmentingGroup(createMembership(members, 0), new UDPMessenger(2440), null);
+        FragmentingGroup group2 = new FragmentingGroup(createMembership(members, 1), new UDPMessenger(2441), receiver);
+        FragmentingGroup group3 = new FragmentingGroup(createMembership(members, 2), new UDPMessenger(2442), null);
+        groups.addAll(asSet(group1, group2, group3));
+
+        Thread.sleep(500);
+
+        group1.broadcast("Hello");
+
+        Thread.sleep(100);
+
+        verify(receiver).receive(eq("Hello"));
+    }
+
+    @Test
+    public void testTransmittingLongMessage() throws Exception {
+        Receiver receiver = Mockito.mock(Receiver.class);
+        List<Member> members = createMembersOnLocalhost(3);
+        FragmentingGroup group1 = new FragmentingGroup(createMembership(members, 0), new UDPMessenger(2440), null);
+        FragmentingGroup group2 = new FragmentingGroup(createMembership(members, 1), new UDPMessenger(2441), receiver);
+        FragmentingGroup group3 = new FragmentingGroup(createMembership(members, 2), new UDPMessenger(2442), null);
+        groups.addAll(asSet(group1, group2, group3));
+
+        Thread.sleep(500);
+
+        group1.broadcast(MESSAGE_TO_SEND);
+
+        Thread.sleep(100);
+
+        verify(receiver).receive(eq(MESSAGE_TO_SEND));
     }
 
     @Test
@@ -56,7 +95,7 @@ public class FragmentingGroupIntegrationTest {
     private FragmentingGroup[] createEndpoints(List<Member> members, Receiver[] receivers) throws IOException, InterruptedException {
         final FragmentingGroup[] endpoints = new FragmentingGroup[members.size()];
         for (int i = 0; i < members.size(); i++) {
-            endpoints[i] = new FragmentingGroup(new UDPMessenger(members, members.get(i).getPort()), receivers[i]);
+            endpoints[i] = new FragmentingGroup(createMembership(members, i), new UDPMessenger(members.get(i).getPort()), receivers[i]);
             groups.add(endpoints[i]);
         }
         Thread.sleep(500); // allow some time for leader election
@@ -66,6 +105,7 @@ public class FragmentingGroupIntegrationTest {
     public static class CountingReceiver implements Receiver {
         public long msgCount = 0l;
         public synchronized void receive(Serializable message) {
+            System.out.println(".");
             msgCount++;
         }
     }

@@ -3,37 +3,26 @@ package paxos;
 import java.io.IOException;
 import java.io.Serializable;
 
-public class Group {
+public class Group implements UDPMessenger.MessageListener {
     private final AcceptorLogic acceptorLogic;
     private final LeaderLogic leaderLogic;
-    private final Messenger messenger;
     private final FailureDetector failureDetector;
-    private final Thread receiverThread;
+    private final GroupMembership membership;
+    private final CommLayer commLayer;
 
     private boolean running = true;
 
-    public Group(Messenger messenger, Receiver receiver) throws IOException {
-        this.messenger = messenger;
+    public Group(GroupMembership membership, CommLayer commLayer, Receiver receiver) {
+        this.membership = membership;
+        this.commLayer = commLayer;
 
-        leaderLogic = new LeaderLogic(messenger);
-        acceptorLogic = new AcceptorLogic(messenger, receiver);
-        failureDetector = new FailureDetector(messenger, leaderLogic);
+        leaderLogic = new LeaderLogic(membership, commLayer);
+        acceptorLogic = new AcceptorLogic(membership, commLayer, receiver);
+        failureDetector = new FailureDetector(membership, commLayer, leaderLogic);
 
-        // start receiving messages
-        receiverThread = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    while (running) {
-                        dispatch(Group.this.messenger.receive());
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-        receiverThread.start();
+        this.commLayer.setListener(this);
 
+        // TODO check if this causes race conditions
         new Thread() {
             @Override
             public void run() {
@@ -56,8 +45,7 @@ public class Group {
     public void close() {
         failureDetector.close();
         this.running = false;
-        receiverThread.interrupt();
-        messenger.close();
+        commLayer.close();
     }
 
     private void dispatch(Serializable message) {
@@ -67,6 +55,10 @@ public class Group {
     }
 
     public int getPositionInGroup() {
-        return messenger.getPositionInGroup();
+        return membership.getPositionInGroup();
+    }
+
+    public void receive(byte[] message) {
+        dispatch((Serializable) PaxosUtils.deserialize(message));
     }
 }

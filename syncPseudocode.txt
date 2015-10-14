@@ -1,0 +1,47 @@
+class Leader {
+  long seqNo;
+  long viewNo;
+
+  Leader(viewNo) {
+    this.viewNo = viewNo;
+    responses = new List();
+    for (member : members) {
+      responses.add(member.newView(newViewNumber(), this));
+    }
+    waitForMajority(responses);
+    chooseMessagesToBroadcast(responses);
+    seqNo = maxSeqNo(responses) + 1;
+  }
+
+  void broadcastReq(m) {
+    responses = new List();
+    for (member : members) {
+      acceptResponses.add(member.accept(viewNo, seqNo++, m));
+    }
+    waitForMajority(responses);
+
+    for (member : members) {
+      member.success(m);
+    }
+  }
+}
+
+class Member {
+  List accepted;
+  long currentView;
+
+  ViewResponse newView(viewNumber, leader) {
+    if (viewNumber < currentView) return reject;
+    return accepted;
+  }
+
+  AcceptResponse accept(seqNo, m) {
+    if (viewNo == currentView) {
+      accepted.add(m)
+    }
+  }
+
+  void success(m) {
+    deliver(m);
+  }
+}

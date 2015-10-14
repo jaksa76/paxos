@@ -8,20 +8,22 @@ import java.util.List;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.validateMockitoUsage;
-import static org.mockito.Mockito.verify;
-import static paxos.TestUtils.verifyNoMoreCommunication;
+import static org.mockito.Mockito.*;
+import static paxos.TestUtils.createMembership;
 
 public class MultiRequestTest {
+
+    public static final byte[] HELLO_BYTES = PaxosUtils.serialize("hello");
+
     @Test
     public void testSendingAndReplying() throws Exception {
         List<Member> members = TestUtils.createMembersOnLocalhost(3);
-        Messenger messenger = TestUtils.createMock(members, 0);
+        GroupMembership membership = createMembership(members, 0);
+        CommLayer messenger = mock(CommLayer.class);
         final boolean[] quorumReached = new boolean[] {false};
         final boolean[] completed = new boolean[] {false};
 
-        MultiRequest<String, DummyResponse> multiRequest = new MultiRequest<String, DummyResponse>(messenger, "hello") {
+        MultiRequest<String, DummyResponse> multiRequest = new MultiRequest<String, DummyResponse>(membership, messenger, "hello") {
             @Override protected void onQuorumReached() {
                 quorumReached[0] = true;
             }
@@ -31,7 +33,7 @@ public class MultiRequestTest {
             }
         };
 
-        verify(messenger).sendToAll("hello");
+        verify(messenger).sendTo(members, HELLO_BYTES);
 
         multiRequest.receive(new DummyResponse("yes", members.get(0)));
         assertFalse(quorumReached[0]);
@@ -48,17 +50,18 @@ public class MultiRequestTest {
         assertTrue(completed[0]);
         assertFalse(multiRequest.isFinished());
 
-        verifyNoMoreCommunication(messenger);
+        verifyNoMoreInteractions((CommLayer) messenger);
     }
 
     @Test
     public void testFilteringWrongMessages() throws Exception {
         List<Member> members = TestUtils.createMembersOnLocalhost(3);
-        Messenger messenger = TestUtils.createMock(members, 0);
+        GroupMembership membership = createMembership(members, 0);
+        CommLayer messenger = mock(CommLayer.class);
         final boolean[] quorumReached = new boolean[] {false};
         final boolean[] completed = new boolean[] {false};
 
-        MultiRequest<String, DummyResponse> multiRequest = new MultiRequest<String, DummyResponse>(messenger, "hello", 0l) {
+        MultiRequest<String, DummyResponse> multiRequest = new MultiRequest<String, DummyResponse>(membership, messenger, "hello", 0l) {
             @Override
             protected DummyResponse filterResponse(Serializable message) {
                 return (message instanceof DummyResponse) ? (DummyResponse) message : null;
@@ -85,11 +88,12 @@ public class MultiRequestTest {
     @Test
     public void testResending() throws Exception {
         List<Member> members = TestUtils.createMembersOnLocalhost(3);
-        Messenger messenger = TestUtils.createMock(members, 0);
+        GroupMembership membership = createMembership(members, 0);
+        CommLayer messenger = mock(CommLayer.class);
         final boolean[] quorumReached = new boolean[] {false};
         final boolean[] completed = new boolean[] {false};
 
-        MultiRequest<String, DummyResponse> multiRequest = new MultiRequest<String, DummyResponse>(messenger, "hello", 0l) {
+        MultiRequest<String, DummyResponse> multiRequest = new MultiRequest<String, DummyResponse>(membership, messenger, "hello", 0l) {
             @Override protected void onQuorumReached() {
                 quorumReached[0] = true;
             }
@@ -99,26 +103,26 @@ public class MultiRequestTest {
             }
         };
 
-        verify(messenger).sendToAll("hello");
+        verify(messenger).sendTo(members, HELLO_BYTES);
 
         multiRequest.receive(new DummyResponse("yes", members.get(0)));
         assertFalse(quorumReached[0]);
         assertFalse(completed[0]);
         assertFalse(multiRequest.isFinished());
 
-        verifyNoMoreCommunication(messenger);
+        verifyNoMoreInteractions((CommLayer) messenger);
         multiRequest.tick(2000);
-        verify(messenger).send("hello", members.get(1));
-        verify(messenger).send("hello", members.get(2));
+        verify(messenger).sendTo(members.get(1), HELLO_BYTES);
+        verify(messenger).sendTo(members.get(2), HELLO_BYTES);
 
         multiRequest.receive(new DummyResponse("yes", members.get(1)));
         assertTrue(quorumReached[0]);
         assertFalse(completed[0]);
         assertFalse(multiRequest.isFinished());
 
-        verifyNoMoreCommunication(messenger);
+        verifyNoMoreInteractions((CommLayer) messenger);
         multiRequest.tick(4000);
-        verify(messenger, times(2)).send("hello", members.get(2));
+        verify(messenger, times(2)).sendTo(members.get(2), HELLO_BYTES);
 
         multiRequest.receive(new DummyResponse("yes", members.get(2)));
         assertTrue(quorumReached[0]);
@@ -127,7 +131,7 @@ public class MultiRequestTest {
 
         multiRequest.tick(6000);
 
-        verifyNoMoreCommunication(messenger);
+        verifyNoMoreInteractions((CommLayer) messenger);
     }
 
     private static class DummyResponse implements MessageWithSender {

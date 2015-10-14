@@ -5,8 +5,8 @@ import paxos.PaxosUtils;
 import java.io.Serializable;
 
 public class FragmentationUtils {
-    public static MessageFragment[] performFragmentation(Serializable message, long msgId, int size) {
-        byte[][] byteFragments = performFragmentation(PaxosUtils.serialize(message), size);
+    public static MessageFragment[] performFragmentation(byte[] message, long msgId, int size) {
+        byte[][] byteFragments = performFragmentation(message, size);
         MessageFragment[] fragments = new MessageFragment[byteFragments.length];
         for (int i = 0; i < fragments.length; i++) {
             fragments[i] = new MessageFragment(msgId, byteFragments[i], i, fragments.length);

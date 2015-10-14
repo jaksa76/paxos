@@ -60,11 +60,22 @@ a leader will never broadcast success for a message that is not chosen
                 if follows that no process has received the SUCCESS of m1
                 it follows that it is safe not to deliver m1
 
-
-
-
     no member will deliver a message after delivering a QUIT
 
     every member whom the QUIT message is delivered, will join the new group specified in the QUIT message
 
+
+alg3:
+    a new joiner asks the leader to form a new view
+    the leader sends the QUIT message to all other processes
+    a process will not deliver any message after a QUIT in that view
+    the QUIT message has the new membership data of the new group
+    after quitting every process joins the new group
+    processes do not leave the group when they receive a QUIT message
+
+    processes should leave the group only when all other (non excluded) processes have received the QUIT message (how do they know?)
+
+    no messsage is delivered in a view after a quit
+    if a process did not deliver a message, the process will resend it eventually to the new view
+    a process will not start delivering messages of the new group until it delivers the QUIT of the previous group
 

@@ -10,22 +10,24 @@ import java.util.Map;
 
 public abstract class MultiRequest<T extends Serializable, R extends MessageWithSender> {
     public static final int RESEND_INTERVAL = 1000;
-    protected final Messenger messenger;
-    protected final T req;
+    private final GroupMembership membership;
+    protected final CommLayer messenger;
+    protected final byte[] req;
     protected Map<Member, R> responses = new HashMap<Member, R>();
     private long lastResend = 0;
     private boolean finished = false;
     private boolean quorumHasBeenReached = false;
     private boolean allMembersHaveReplied = false;
 
-    public MultiRequest(Messenger messenger, T req) {
-        this(messenger, req, System.currentTimeMillis());
+    public MultiRequest(GroupMembership membership, CommLayer messenger, T req) {
+        this(membership, messenger, req, System.currentTimeMillis());
     }
 
-    public MultiRequest(Messenger messenger, T req, long time) {
+    public MultiRequest(GroupMembership membership, CommLayer messenger, T req, long time) {
+        this.membership = membership;
         this.messenger = messenger;
-        this.req = req;
-        messenger.sendToAll(req);
+        this.req = PaxosUtils.serialize(req);
+        messenger.sendTo(membership.getMembers(), this.req);
         this.lastResend = time;
     }
 
@@ -71,7 +73,7 @@ public abstract class MultiRequest<T extends Serializable, R extends MessageWith
      * @return true if we have received responses from a quorum of members.
      */
     protected boolean haveQuorum() {
-        return responses.size() > messenger.groupSize() / 2;
+        return responses.size() > membership.groupSize() / 2;
     }
 
     /**
@@ -106,13 +108,13 @@ public abstract class MultiRequest<T extends Serializable, R extends MessageWith
     }
 
     protected void resendRequests(long time) {
-        for (Member member : messenger.getMembers()) {
-            if (!responses.containsKey(member)) messenger.send(req, member);
+        for (Member member : membership.getMembers()) {
+            if (!responses.containsKey(member)) messenger.sendTo(member, req);
         }
         lastResend = time;
     }
 
     protected boolean allMembersReplied() {
-        return responses.size() == messenger.groupSize();
+        return responses.size() == membership.groupSize();
     }
 }

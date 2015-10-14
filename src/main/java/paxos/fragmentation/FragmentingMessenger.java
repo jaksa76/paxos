@@ -1,126 +1,82 @@
 package paxos.fragmentation;
 
+import paxos.CommLayer;
+import paxos.UDPMessenger;
 import paxos.Member;
-import paxos.Messenger;
+import paxos.PaxosUtils;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class FragmentingMessenger implements Messenger {
+public class FragmentingMessenger implements CommLayer, UDPMessenger.MessageListener {
 
     public static final int FRAGMENT_SIZE = 64000;
-    private final Messenger messenger;
     private final Map<Long, FragmentCollector> collectors = new HashMap<Long, FragmentCollector>();
-    private final BlockingDeque<Serializable> completedMessages = new LinkedBlockingDeque<Serializable>();
-    private final int myPositionInGroup;
+    private final CommLayer messenger;
+    private UDPMessenger.MessageListener upstreamListener;
     private AtomicLong msgIdGen = new AtomicLong(0);
 
-
-    private boolean running = true;
-
-    public FragmentingMessenger(Messenger msngr) throws SocketException, UnknownHostException {
-        this.messenger = msngr;
-        this.myPositionInGroup = messenger.getPositionInGroup();
-
-        // get stuff from the udp messenger and collects the fragments
-        new Thread() {
-            @Override
-            public void run() {
-                try {
-                    while (running) {
-                        Serializable message = messenger.receive();
-
-                        if (message instanceof MessageFragment) {
-                            collectFragment((MessageFragment) message);
-                        } else {
-                            throw new RuntimeException("Received " + message.getClass());
-                        }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            private void collectFragment(MessageFragment messageFragment) {
-                if (!collectors.containsKey(messageFragment.id)) {
-                    collectors.put(messageFragment.id, new FragmentCollector(messageFragment.totalFragments));
-                }
-                FragmentCollector collector = collectors.get(messageFragment.id);
-                collector.addPart(messageFragment.fragmentNo, messageFragment.part);
-
-                if (collector.isComplete()) {
-                    collectors.remove(messageFragment.id);
-                    enqueue(collector.extractMessage());
-                }
-            }
-        }.start();
+    public FragmentingMessenger(CommLayer messenger) {
+        this.messenger = messenger;
+        this.messenger.setListener(this);
     }
 
-    private void enqueue(Serializable message) {
-        try {
-            completedMessages.putLast(message);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+    public void setListener(MessageListener listener) {
+        this.upstreamListener = listener;
     }
 
-    private Serializable dequeue() {
-        try {
-            return completedMessages.takeFirst();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public Serializable receive() throws IOException, ClassNotFoundException {
-        return dequeue();
-    }
-
-    public Member getUID() throws UnknownHostException {
-        return messenger.getUID();
-    }
-
-    public void sendToAll(Serializable message) {
+    public void sendTo(List<Member> members, byte[] message) {
         MessageFragment[] messageFragments = FragmentationUtils.performFragmentation(message, createMsgId(message), FRAGMENT_SIZE);
         for (MessageFragment messageFragment : messageFragments) {
-            messenger.sendToAll(messageFragment);
+            messenger.sendTo(members, PaxosUtils.serialize(messageFragment));
         }
     }
 
-    public void send(Serializable message, Member member) {
+    public void sendTo(Member member, byte[] message) {
         MessageFragment[] messageFragments = FragmentationUtils.performFragmentation(message, createMsgId(message), FRAGMENT_SIZE);
         for (MessageFragment messageFragment : messageFragments) {
-            messenger.send(messageFragment, member);
+            messenger.sendTo(member, PaxosUtils.serialize(messageFragment));
         }
     }
 
     private long createMsgId(Serializable message) {
-        return myPositionInGroup * 1000000l + msgIdGen.incrementAndGet();
-    }
-
-
-    public int groupSize() {
-        return messenger.groupSize();
-    }
-
-    public List<Member> getMembers() {
-        return messenger.getMembers();
+        return (long) (Math.random() * Long.MAX_VALUE);
     }
 
     public void close() {
-        this.running = false;
         this.messenger.close();
     }
 
-    public int getPositionInGroup() {
-        return messenger.getPositionInGroup();
+    public void receive(byte[] bytes) {
+        Serializable message = (Serializable) PaxosUtils.deserialize(bytes);
+
+        if (message instanceof MessageFragment) {
+            collectFragment((MessageFragment) message);
+        } else {
+            throw new RuntimeException("Received " + message.getClass());
+        }
+
+    }
+
+    private void collectFragment(MessageFragment messageFragment) {
+        FragmentCollector collector = getOrCreateCollector(messageFragment);
+        collector.addPart(messageFragment.fragmentNo, messageFragment.part);
+
+        if (collector.isComplete()) {
+            collectors.remove(messageFragment.id);
+            if (upstreamListener != null) upstreamListener.receive(collector.extractMessage());
+        }
+    }
+
+    private FragmentCollector getOrCreateCollector(MessageFragment messageFragment) {
+        if (!collectors.containsKey(messageFragment.id)) {
+            collectors.put(messageFragment.id, new FragmentCollector(messageFragment.totalFragments));
+        }
+        return collectors.get(messageFragment.id);
     }
 }

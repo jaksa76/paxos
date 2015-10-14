@@ -12,7 +12,7 @@ public class Member implements Comparable<Member>, Serializable {
     private final byte[] addressBytes;
 
 
-    Member(InetAddress address, int port) {
+    public Member(InetAddress address, int port) {
         this.address = address;
         this.port = port;
         this.addressBytes = address.getAddress();

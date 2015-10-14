@@ -10,7 +10,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class FailureDetector {
     private static final long INTERVAL = 1000; // 1 second
     private static final long TIMEOUT = 3000; // 3 seconds
-    private final Messenger messenger;
+    private final GroupMembership membership;
+    private final CommLayer messenger;
     private final FailureListener listener;
     private final Map<Member, Long> lastHeardFrom = new ConcurrentHashMap<Member, Long>();
     private final Thread heart;
@@ -18,29 +19,30 @@ public class FailureDetector {
     private Set<Member> membersAlive = new HashSet<Member>();
     private final TimeProvider timeProvider;
 
-    public FailureDetector(Messenger messenger, FailureListener listener) throws UnknownHostException {
-        this(messenger, listener, new DefaultTimeProvider());
+    public FailureDetector(GroupMembership membership, CommLayer messenger, FailureListener listener) {
+        this(membership, messenger, listener, new DefaultTimeProvider());
     }
 
     // for testing purposes
-    FailureDetector(final Messenger messenger, final FailureListener listener, final TimeProvider timeProvider) throws UnknownHostException {
+    FailureDetector(final GroupMembership membership, final CommLayer messenger, final FailureListener listener, final TimeProvider timeProvider) {
+        this.membership = membership;
         this.messenger = messenger;
         this.listener = listener;
         this.timeProvider = timeProvider;
 
-        for (Member member : messenger.getMembers()) {
+        for (Member member : membership.getMembers()) {
             lastHeardFrom.put(member, timeProvider.getTime());
             membersAlive.add(member);
         }
 
-        final Heartbeat heartbeat = new Heartbeat(messenger.getUID());
+        final byte[] heartbeat = PaxosUtils.serialize(new Heartbeat(membership.getUID()));
         this.heart = new Thread() {
             @Override public void run() {
                 try {
                     while (running) {
-                        messenger.sendToAll(heartbeat);
+                        messenger.sendTo(membership.getMembers(), heartbeat);
                         Thread.sleep(INTERVAL);
-                        for (Member member : messenger.getMembers()) {
+                        for (Member member : membership.getMembers()) {
                             if (timeProvider.getTime() - lastHeardFrom.get(member) > TIMEOUT) {
                                 if (membersAlive.contains(member)) {
                                     membersAlive.remove(member);

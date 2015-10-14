@@ -22,7 +22,7 @@ public class FragmentCollectorTest {
 
         collector.addPart(0, fragments[0]);
         assertThat(collector.isComplete(), is(true));
-        assertThat(collector.extractMessage(), CoreMatchers.<Serializable>is("The quick brown fox jumps over the lazy dog."));
+        assertThat((Serializable) PaxosUtils.deserialize(collector.extractMessage()), CoreMatchers.<Serializable>is("The quick brown fox jumps over the lazy dog."));
     }
 
     @Test
@@ -35,7 +35,7 @@ public class FragmentCollectorTest {
         assertThat(collector.isComplete(), is(false));
         collector.addPart(1, fragments[1]);
         assertThat(collector.isComplete(), is(true));
-        assertThat(collector.extractMessage(), CoreMatchers.<Serializable>is(TEXT));
+        assertThat((Serializable) PaxosUtils.deserialize(collector.extractMessage()), CoreMatchers.<Serializable>is(TEXT));
     }
 
     @Test
@@ -50,7 +50,7 @@ public class FragmentCollectorTest {
         assertThat(collector.isComplete(), is(false));
         collector.addPart(0, fragments[0]);
         assertThat(collector.isComplete(), is(true));
-        assertThat(collector.extractMessage(), CoreMatchers.<Serializable>is(TEXT));
+        assertThat((Serializable) PaxosUtils.deserialize(collector.extractMessage()), CoreMatchers.<Serializable>is(TEXT));
     }
 
     @Test
@@ -67,7 +67,7 @@ public class FragmentCollectorTest {
         assertThat(collector.isComplete(), is(false));
         collector.addPart(0, fragments[0]);
         assertThat(collector.isComplete(), is(true));
-        assertThat(collector.extractMessage(), CoreMatchers.<Serializable>is(TEXT));
+        assertThat((Serializable) PaxosUtils.deserialize(collector.extractMessage()), CoreMatchers.<Serializable>is(TEXT));
     }
 
 

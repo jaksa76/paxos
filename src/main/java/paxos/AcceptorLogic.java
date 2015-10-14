@@ -8,7 +8,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class AcceptorLogic {
-    private final Messenger messenger;
+    private final GroupMembership membership;
+    private final CommLayer messenger;
     private final BufferedReceiver receiver;
     private final Member me;
     private final WaitingRoom waitingForResponse = new WaitingRoom();
@@ -22,11 +23,12 @@ public class AcceptorLogic {
     private AtomicLong msgIdGen = new AtomicLong(0);
 
 
-    public AcceptorLogic(Messenger Messenger, Receiver receiver) throws UnknownHostException {
-        this.messenger = Messenger;
+    public AcceptorLogic(GroupMembership membership, CommLayer messenger, Receiver receiver) {
+        this.membership = membership;
+        this.messenger = messenger;
         this.receiver = new BufferedReceiver(receiver);
-        this.me = messenger.getUID();
-        this.myPositionInGroup = messenger.getPositionInGroup();
+        this.me = membership.getUID();
+        this.myPositionInGroup = membership.getPositionInGroup();
         this.leader = me;
     }
 
@@ -36,7 +38,7 @@ public class AcceptorLogic {
         try {
             while (!broadcastSuccessful) {
 //                System.out.println("sending request to " + leader);
-                messenger.send(new BroadcastRequest(message, msgId), leader);
+                messenger.sendTo(leader, PaxosUtils.serialize(new BroadcastRequest(message, msgId)));
                 broadcastSuccessful = waitingForResponse.waitALittle(msgId);
             }
         } catch (InterruptedException e) {
@@ -64,18 +66,18 @@ public class AcceptorLogic {
             System.out.println(me + ": setting leader to " + newView.leader);
             this.leader = newView.leader;
             this.viewNumber = newView.viewNumber;
-            messenger.send(new ViewAccepted(viewNumber, accepted, me), leader);
+            messenger.sendTo(leader, PaxosUtils.serialize(new ViewAccepted(viewNumber, accepted, me)));
         } else if (newView.viewNumber == viewNumber && newView.leader.equals(leader)) {
-            messenger.send(new ViewAccepted(viewNumber, accepted, me), leader);
+            messenger.sendTo(leader, PaxosUtils.serialize(new ViewAccepted(viewNumber, accepted, me)));
         }
     }
 
     private void onAccept(Accept accept) {
         if (accept.viewNo < viewNumber) {
-            messenger.send(new Abort(accept.viewNo, accept.seqNo), accept.sender);
+            messenger.sendTo(accept.sender, PaxosUtils.serialize(new Abort(accept.viewNo, accept.seqNo)));
         } else {
             accepted.put(accept.seqNo, new Acceptance(accept.viewNo, accept.message, accept.msgId));
-            messenger.send(new Accepted(accept.viewNo, accept.seqNo, accept.msgId, getMissingSuccess(accept.seqNo), me), accept.sender);
+            messenger.sendTo(accept.sender, PaxosUtils.serialize(new Accepted(accept.viewNo, accept.seqNo, accept.msgId, getMissingSuccess(accept.seqNo), me)));
         }
     }
 
@@ -83,7 +85,7 @@ public class AcceptorLogic {
         receiver.receive(success.seqNo, success.message);
         updateTail(success);
         waitingForResponse.unblock(success.msgId);
-        messenger.send(new SuccessAck(success.msgId, me), leader);
+        messenger.sendTo(leader, PaxosUtils.serialize(new SuccessAck(success.msgId, me)));
     }
 
     private void updateTail(Success success) {

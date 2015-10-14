@@ -33,9 +33,9 @@ public class CommunicationIntegrationTest {
     public void testBroadcast() throws Exception {
         Receiver receiver = Mockito.mock(Receiver.class);
         List<Member> members = createMembersOnLocalhost(3);
-        Group group1 = new Group(new UDPMessenger(members, 2440), null);
-        Group group2 = new Group(new UDPMessenger(members, 2441), receiver);
-        Group group3 = new Group(new UDPMessenger(members, 2442), null);
+        Group group1 = new Group(createMembership(members, 0), new UDPMessenger(2440), null);
+        Group group2 = new Group(createMembership(members, 1), new UDPMessenger(2441), receiver);
+        Group group3 = new Group(createMembership(members, 2), new UDPMessenger(2442), null);
         groups.addAll(asSet(group1, group2, group3));
 
         Thread.sleep(500);
@@ -99,7 +99,7 @@ public class CommunicationIntegrationTest {
             senders[i].start();
         }
 
-        Thread.sleep(500);
+        Thread.sleep(300);
         leader.close();
 
         waitTillFinished(senders);
@@ -128,7 +128,7 @@ public class CommunicationIntegrationTest {
     private Group[] createEndpoints(List<Member> members, Receiver[] receivers) throws IOException, InterruptedException {
         final Group[] endpoints = new Group[members.size()];
         for (int i = 0; i < members.size(); i++) {
-            endpoints[i] = new Group(new UDPMessenger(members, members.get(i).getPort()), receivers[i]);
+            endpoints[i] = new Group(createMembership(members, i), new UDPMessenger(members.get(i).getPort()), receivers[i]);
             groups.add(endpoints[i]);
         }
         Thread.sleep(500); // allow some time for leader election
@@ -170,7 +170,6 @@ public class CommunicationIntegrationTest {
         }
         return senders;
     }
-
 
     public static class CalculatingReceiver implements Receiver {
         public double value = 1.0;

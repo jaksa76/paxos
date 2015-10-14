@@ -27,22 +27,17 @@ class FragmentCollector {
         return true;
     }
 
-    public Serializable extractMessage() {
-        try {
-            int totalBytes = 0;
-            for (byte[] part : parts) totalBytes += part.length;
+    public byte[] extractMessage() {
+        int totalBytes = 0;
+        for (byte[] part : parts) totalBytes += part.length;
 
-            byte[] concatenated = new byte[totalBytes];
-            int cursor = 0;
-            for (byte[] part : parts) {
-                System.arraycopy(part, 0, concatenated, cursor, part.length);
-                cursor += part.length;
-            }
-
-            ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(concatenated));
-            return (Serializable) ois.readObject();
-        } catch (Exception e) {
-            throw new RuntimeException("Could not deserialize concatenated message", e);
+        byte[] concatenated = new byte[totalBytes];
+        int cursor = 0;
+        for (byte[] part : parts) {
+            System.arraycopy(part, 0, concatenated, cursor, part.length);
+            cursor += part.length;
         }
+
+        return concatenated;
     }
 }
