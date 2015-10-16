@@ -49,6 +49,7 @@ public class Group implements UDPMessenger.MessageListener {
     }
 
     private void dispatch(Serializable message) {
+        System.out.println("dispatching " + message);
         leaderLogic.dispatch(message);
         acceptorLogic.dispatch(message);
         failureDetector.dispatch(message);

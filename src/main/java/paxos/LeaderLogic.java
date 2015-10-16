@@ -98,7 +98,7 @@ public class LeaderLogic implements FailureListener {
     }
 
     public void memberFailed(Member failedMember, Set<Member> aliveMembers) {
-        if (PaxosUtils.selectLeader(aliveMembers).equals(me)) {
+        if (me.equals(PaxosUtils.selectLeader(aliveMembers))) {
             System.out.println(me + ": taking leadership");
             assistants.add(new Election(membership, messenger, timeProvider.getTime(), newViewNumber()));
         }

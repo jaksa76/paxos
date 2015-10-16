@@ -67,7 +67,11 @@ public class FragmentingGroup {
 
                 if (collector.isComplete()) {
                     collectors.remove(messageFragment.id);
-                    if (receiver != null) receiver.receive((Serializable) PaxosUtils.deserialize(collector.extractMessage()));
+                    if (receiver != null) {
+                        Serializable deserializedMessage = (Serializable) PaxosUtils.deserialize(collector.extractMessage());
+                        System.out.println("completed message " + deserializedMessage);
+                        receiver.receive(deserializedMessage);
+                    }
                 }
             }
         }
