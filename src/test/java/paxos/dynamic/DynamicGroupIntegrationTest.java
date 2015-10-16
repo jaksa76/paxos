@@ -10,6 +10,7 @@ import java.util.List;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public class DynamicGroupIntegrationTest {
     @Test
@@ -43,5 +44,7 @@ public class DynamicGroupIntegrationTest {
         verify(receiver1).receive("Goodbye");
         verify(receiver2).receive("Goodbye");
         verify(receiver3).receive("Goodbye");
+
+        verifyNoMoreInteractions(receiver1, receiver2, receiver3);
     }
 }
