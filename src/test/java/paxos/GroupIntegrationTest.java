@@ -4,6 +4,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
+import paxos.communication.Member;
+import paxos.communication.UDPMessenger;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -19,7 +21,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static paxos.TestUtils.*;
 
-public class CommunicationIntegrationTest {
+public class GroupIntegrationTest {
     private final Set<Group> groups = new HashSet<Group>();
 
     @After public void tearDown() throws InterruptedException {
@@ -44,7 +46,7 @@ public class CommunicationIntegrationTest {
 
         Thread.sleep(100);
 
-        verify(receiver).receive(eq("Hello"));
+        verify(receiver, timeout(1000)).receive(eq("Hello"));
     }
 
     @Test
@@ -117,7 +119,7 @@ public class CommunicationIntegrationTest {
         Group[] endpoints = createEndpoints(members, receivers);
 
         endpoints[0].broadcast("Hello");
-        verify(receivers[1]).receive(eq("Hello"));
+        verify(receivers[1], timeout(1000)).receive(eq("Hello"));
 
         endpoints[groupSize-1].close();
         endpoints[0].broadcast("Goodbye");

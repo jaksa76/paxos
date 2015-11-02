@@ -1,9 +1,10 @@
 package paxos;
 
+import paxos.communication.CommLayer;
+import paxos.communication.Member;
 import paxos.messages.*;
 
 import java.io.Serializable;
-import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 

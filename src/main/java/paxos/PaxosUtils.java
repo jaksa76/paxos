@@ -1,5 +1,7 @@
 package paxos;
 
+import paxos.communication.Member;
+
 import java.io.*;
 import java.util.*;
 

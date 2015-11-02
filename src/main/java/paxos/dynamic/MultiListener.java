@@ -1,6 +1,6 @@
 package paxos.dynamic;
 
-import paxos.CommLayer;
+import paxos.communication.CommLayer;
 
 import java.util.ArrayList;
 

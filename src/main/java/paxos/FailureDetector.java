@@ -1,78 +1,82 @@
 package paxos;
 
+import paxos.communication.CommLayer;
+import paxos.communication.Member;
+import paxos.communication.Tick;
 import paxos.messages.Heartbeat;
 
 import java.io.Serializable;
-import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class FailureDetector {
     private static final long INTERVAL = 1000; // 1 second
     private static final long TIMEOUT = 3000; // 3 seconds
+
     private final GroupMembership membership;
     private final CommLayer messenger;
     private final FailureListener listener;
     private final Map<Member, Long> lastHeardFrom = new ConcurrentHashMap<Member, Long>();
-    private final Thread heart;
-    private boolean running = true;
-    private Set<Member> membersAlive = new HashSet<Member>();
-    private final TimeProvider timeProvider;
+    private final byte[] heartbeat;
 
-    public FailureDetector(GroupMembership membership, CommLayer messenger, FailureListener listener) {
-        this(membership, messenger, listener, new DefaultTimeProvider());
-    }
+    private Set<Member> membersAlive = new HashSet<Member>();
+    private long lastHearbeat = 0;
+    private long time = 0;
+
+//    public FailureDetector(GroupMembership membership, CommLayer messenger, FailureListener listener) {
+//        this(membership, messenger, listener, System.currentTimeMillis());
+//    }
 
     // for testing purposes
-    FailureDetector(final GroupMembership membership, final CommLayer messenger, final FailureListener listener, final TimeProvider timeProvider) {
+    public FailureDetector(final GroupMembership membership, final CommLayer messenger, final FailureListener listener) {
         this.membership = membership;
         this.messenger = messenger;
         this.listener = listener;
-        this.timeProvider = timeProvider;
 
+        membersAlive.addAll(membership.getMembers());
+
+        heartbeat = PaxosUtils.serialize(new Heartbeat(membership.getUID()));
+    }
+
+    private void sendHeartbeat(long time) {
+        messenger.sendTo(membership.getMembers(), heartbeat);
+        this.lastHearbeat = time;
+    }
+
+    private void checkForFailedMembers(long time) {
         for (Member member : membership.getMembers()) {
-            lastHeardFrom.put(member, timeProvider.getTime());
-            membersAlive.add(member);
-        }
-
-        final byte[] heartbeat = PaxosUtils.serialize(new Heartbeat(membership.getUID()));
-        this.heart = new Thread() {
-            @Override public void run() {
-                try {
-                    while (running) {
-                        messenger.sendTo(membership.getMembers(), heartbeat);
-                        Thread.sleep(INTERVAL);
-                        for (Member member : membership.getMembers()) {
-                            if (timeProvider.getTime() - lastHeardFrom.get(member) > TIMEOUT) {
-                                if (membersAlive.contains(member)) {
-                                    membersAlive.remove(member);
-                                    listener.memberFailed(member, membersAlive);
-                                }
-                            } else {
-                                if (!membersAlive.contains(member)) {
-                                    membersAlive.add(member);
-                                    // TODO notify member recovered
-                                }
-                            }
-                        }
-                    }
-                } catch (InterruptedException e) {
-                    // we're closing
+            if (member.equals(membership.getUID())) continue;
+            if (!lastHeardFrom.containsKey(member)) initialize(time, member); // lazy initialization sinse we don't have the initial time
+            if (time - lastHeardFrom.get(member) > TIMEOUT) {
+                if (membersAlive.contains(member)) {
+                    membersAlive.remove(member);
+                    listener.memberFailed(member, membersAlive);
+                }
+            } else {
+                if (!membersAlive.contains(member)) {
+                    membersAlive.add(member);
+                    // TODO notify member recovered
                 }
             }
-        };
-        heart.start();
+        }
+    }
+
+    private Long initialize(long time, Member member) {
+        return lastHeardFrom.put(member, time);
+    }
+
+    public void update(long time) {
+        this.time = time;
+        if (lastHearbeat + INTERVAL < time) sendHeartbeat(time);
+        checkForFailedMembers(time);
     }
 
     public void dispatch(Serializable message) {
         if (message instanceof Heartbeat) {
             Heartbeat heartbeat = (Heartbeat) message;
-            lastHeardFrom.put(heartbeat.sender, timeProvider.getTime());
+            lastHeardFrom.put(heartbeat.sender, time);
+        } else if (message instanceof Tick) {
+            update(((Tick) message).time);
         }
-    }
-
-    public void close() {
-        this.running = false;
-        this.heart.interrupt();
     }
 }

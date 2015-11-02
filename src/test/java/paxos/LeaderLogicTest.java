@@ -1,6 +1,9 @@
 package paxos;
 
 import org.junit.Test;
+import paxos.communication.CommLayer;
+import paxos.communication.Member;
+import paxos.communication.Tick;
 import paxos.messages.*;
 
 import java.io.Serializable;
@@ -317,8 +320,7 @@ public class LeaderLogicTest {
     }
 
     private void advanceTimeTo(int time) {
-        timeProvider.time = time;
-        leader.update();
+        leader.update(new Tick(time));
     }
 
     private class TestMessageWithSender implements MessageWithSender {

@@ -1,7 +1,7 @@
 package paxos;
 
-import org.junit.Assert;
 import org.junit.Test;
+import paxos.communication.Member;
 import paxos.messages.Accept;
 
 import java.net.InetAddress;

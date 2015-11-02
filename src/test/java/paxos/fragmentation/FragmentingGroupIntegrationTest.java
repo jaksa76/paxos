@@ -4,10 +4,9 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
-import paxos.Group;
-import paxos.Member;
+import paxos.communication.Member;
 import paxos.Receiver;
-import paxos.UDPMessenger;
+import paxos.communication.UDPMessenger;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -23,7 +22,7 @@ public class FragmentingGroupIntegrationTest {
     private final Set<FragmentingGroup> groups = new HashSet<FragmentingGroup>();
     private static final byte[] MESSAGE_TO_SEND = createMessageOfLength(64000*3+100);
 //    private static final byte[] MESSAGE_TO_SEND = createMessageOfLength(100000);
-    private static final int MESSAGES_TO_SEND = 10;
+    private static final int MESSAGES_TO_SEND = 3;
     private static final int GROUP_SIZE = 3;
 
     @After

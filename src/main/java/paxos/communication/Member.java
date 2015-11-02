@@ -1,10 +1,9 @@
-package paxos;
+package paxos.communication;
 
 import com.sun.istack.internal.NotNull;
 
 import java.io.Serializable;
 import java.net.InetAddress;
-import java.util.Arrays;
 
 public class Member implements Comparable<Member>, Serializable {
     private final InetAddress address;

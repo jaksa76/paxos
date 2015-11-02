@@ -1,9 +1,6 @@
 package paxos.messages;
 
-import java.io.Serializable;
-import java.util.List;
-
-import paxos.Member;
+import paxos.communication.Member;
 
 public class NewView implements SpecialMessage {
     public final Member leader;

@@ -1,6 +1,7 @@
 package paxos;
 
-import java.util.List;
+import paxos.communication.Member;
+
 import java.util.Set;
 
 public interface FailureListener {

@@ -1,4 +1,4 @@
-package paxos;
+package paxos.communication;
 
 import java.util.List;
 

@@ -1,13 +1,12 @@
 package paxos.fragmentation;
 
-import paxos.CommLayer;
-import paxos.UDPMessenger;
-import paxos.Member;
+import paxos.communication.CommLayer;
+import paxos.communication.Tick;
+import paxos.communication.UDPMessenger;
+import paxos.communication.Member;
 import paxos.PaxosUtils;
 
 import java.io.Serializable;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +56,8 @@ public class FragmentingMessenger implements CommLayer, UDPMessenger.MessageList
 
         if (message instanceof MessageFragment) {
             collectFragment((MessageFragment) message);
+        } else if (message instanceof Tick) {
+            if (upstreamListener != null) upstreamListener.receive(bytes);
         } else {
             throw new RuntimeException("Received " + message.getClass());
         }

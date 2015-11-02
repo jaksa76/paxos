@@ -1,6 +1,6 @@
 package paxos.dynamic;
 
-import paxos.Member;
+import paxos.communication.Member;
 
 import java.io.Serializable;
 import java.util.List;

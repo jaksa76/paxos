@@ -1,13 +1,13 @@
 package paxos;
 
-import com.sun.org.apache.bcel.internal.generic.NEW;
-import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;
+import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.mockito.Matchers;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import paxos.communication.Member;
+import paxos.communication.Tick;
 import paxos.messages.Accept;
 import paxos.messages.Accepted;
 import paxos.messages.NewView;
@@ -17,8 +17,6 @@ import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
-
-import static org.mockito.Mockito.*;
 
 public class TestUtils {
     public static List<Member> createMembersOnLocalhost(int n) throws UnknownHostException {
@@ -54,7 +52,6 @@ public class TestUtils {
 
     public static byte[] acceptMessage(final long seqNo, final Serializable msg) {
         return Matchers.argThat(new TypeSafeMatcher<byte[]>() {
-            @Override
             protected boolean matchesSafely(byte[] bytes) {
                 Serializable message = (Serializable) PaxosUtils.deserialize(bytes);
                 if (message instanceof Accept) {
@@ -71,21 +68,31 @@ public class TestUtils {
     }
 
     public static byte[] newView(final long viewNo) {
-        return Matchers.argThat(new TypeSafeMatcher<byte[]>() {
-            @Override
-            protected boolean matchesSafely(byte[] bytes) {
-                Serializable message = (Serializable) PaxosUtils.deserialize(bytes);
-                if (message instanceof NewView) {
-                    NewView newView = (NewView) message;
-                    return newView.viewNumber == viewNo;
-                }
-                return false;
+        return Matchers.argThat(deserialized(new TypeSafeMatcher<NewView>() {
+            protected boolean matchesSafely(NewView newView) {
+                return newView.viewNumber == viewNo;
             }
 
             public void describeTo(Description description) {
                 description.appendText("A NEW_VIEW message with viewNo: " + viewNo);
             }
-        });
+        }));
+    }
+
+    public static byte[] message(Matcher m) {
+        return Matchers.argThat(deserialized(m));
+    }
+
+    public static Matcher<byte[]> deserialized(final Matcher m) {
+        return new TypeSafeMatcher<byte[]>() {
+            protected boolean matchesSafely(byte[] bytes) {
+                return m.matches(PaxosUtils.deserialize(bytes));
+            }
+
+            public void describeTo(Description description) {
+                m.describeTo(description);
+            }
+        };
     }
 
     public static byte[] acceptedMessageWithMissingList(final long... seqNos) {
@@ -118,6 +125,10 @@ public class TestUtils {
     public static void waitTillFinished(Thread[] threads) throws InterruptedException {
         for (Thread t : threads) t.join();
         Thread.sleep(300);
+    }
+
+    public static byte[] tick(long time) {
+        return PaxosUtils.serialize(new Tick(time));
     }
 
     public static class ArgCaptor<T> implements Answer {

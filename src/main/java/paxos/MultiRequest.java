@@ -1,8 +1,8 @@
 package paxos;
 
-import paxos.messages.Heartbeat;
+import paxos.communication.CommLayer;
+import paxos.communication.Member;
 import paxos.messages.MessageWithSender;
-import paxos.messages.SpecialMessage;
 
 import java.io.Serializable;
 import java.util.HashMap;

@@ -1,8 +1,7 @@
 package paxos.messages;
 
-import paxos.Member;
+import paxos.communication.Member;
 
-import java.io.Serializable;
 import java.util.Set;
 
 public class Accepted implements SpecialMessage, MessageWithSender {

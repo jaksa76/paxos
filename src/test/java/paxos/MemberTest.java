@@ -1,7 +1,7 @@
 package paxos;
 
 import org.junit.Test;
-import paxos.Member;
+import paxos.communication.Member;
 
 import java.net.InetAddress;
 

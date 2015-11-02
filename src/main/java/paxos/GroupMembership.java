@@ -1,9 +1,7 @@
 package paxos;
 
-import java.io.Serializable;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+import paxos.communication.Member;
+
 import java.util.Collections;
 import java.util.List;
 

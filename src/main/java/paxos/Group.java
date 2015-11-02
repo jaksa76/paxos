@@ -1,6 +1,9 @@
 package paxos;
 
-import java.io.IOException;
+import paxos.communication.CommLayer;
+import paxos.communication.Tick;
+import paxos.communication.UDPMessenger;
+
 import java.io.Serializable;
 
 public class Group implements UDPMessenger.MessageListener {
@@ -21,21 +24,6 @@ public class Group implements UDPMessenger.MessageListener {
         failureDetector = new FailureDetector(membership, commLayer, leaderLogic);
 
         this.commLayer.setListener(this);
-
-        // TODO check if this causes race conditions
-        new Thread() {
-            @Override
-            public void run() {
-                try {
-                    while (running) {
-                        leaderLogic.update();
-                        sleep(1000);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }.start();
     }
 
     public void broadcast(Serializable message) {
@@ -43,7 +31,6 @@ public class Group implements UDPMessenger.MessageListener {
     }
 
     public void close() {
-        failureDetector.close();
         this.running = false;
         commLayer.close();
     }

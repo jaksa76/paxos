@@ -1,6 +1,9 @@
 package paxos.dynamic;
 
 import paxos.*;
+import paxos.communication.CommLayer;
+import paxos.communication.Member;
+import paxos.communication.Tick;
 import paxos.fragmentation.FragmentingGroup;
 
 import java.io.IOException;
@@ -64,8 +67,8 @@ public class DynamicGroup implements Receiver {
         return (GroupInfo) messageHolder[0];
     }
 
-    void onNewJoin(Member joiner) {
-        final FragmentingGroup group = groups.get(groups.size() - 1);
+    public void addMember(Member joiner) {
+        final FragmentingGroup group = getCurrentGroup();
         members = new ArrayList<Member>(members);
         members.add(joiner);
         Collections.sort(members);
@@ -85,25 +88,57 @@ public class DynamicGroup implements Receiver {
         commLayer.sendTo(joiner, PaxosUtils.serialize(new GroupInfo(members, groupUID)));
     }
 
+    private FragmentingGroup getCurrentGroup() {
+        return groups.get(groups.size() - 1);
+    }
+
+    public void removeMember(Member leaver) {
+        final FragmentingGroup group = getCurrentGroup();
+        members = new ArrayList<Member>(members);
+        members.remove(leaver);
+        Collections.sort(members);
+        final long groupUID = createGroupUID();
+        new Thread() {
+            @Override
+            public void run() {
+                try {
+                    group.broadcast(new GroupChange(groupUID, members));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+    }
+
     private long createGroupUID() {
         return (long) (Math.random()*Long.MAX_VALUE);
     }
 
     public void broadcast(Serializable message) throws IOException {
-        groups.get(groups.size()-1).broadcast(message);
+        getCurrentGroup().broadcast(message);
     }
 
     public void receive(Serializable message) {
         if (message instanceof GroupChange) {
-            // TODO stop receiving messages from previous groups
             GroupChange groupChangeMessage = (GroupChange) message;
 
-            GroupMembership membership = new GroupMembership(groupChangeMessage.members, me);
-            FilteringMessenger filteringMessenger = new FilteringMessenger(groupChangeMessage.groupId, commLayer, multiListener);
-            this.groups.add(new FragmentingGroup(membership, filteringMessenger, this));
+            if (groupChangeMessage.members.contains(me)) {
+                GroupMembership membership = new GroupMembership(groupChangeMessage.members, me);
+                FilteringMessenger filteringMessenger = new FilteringMessenger(groupChangeMessage.groupId, commLayer, multiListener);
+                this.groups.add(new FragmentingGroup(membership, filteringMessenger, this));
+            } else {
+                close();
+            }
         } else {
             receiver.receive(message);
         }
+    }
+
+    public void close() {
+        for (FragmentingGroup group : groups) {
+            group.close();
+        }
+        commLayer.close();
     }
 
     public class FilteringMessenger implements CommLayer, CommLayer.MessageListener {
@@ -141,9 +176,11 @@ public class DynamicGroup implements Receiver {
                 if (dynamicGroupMessage.groupId == this.groupID) {
                     listener.receive(dynamicGroupMessage.message);
                 }
+            } else if (message instanceof Tick) {
+                listener.receive(bytes);
             } else if (message instanceof JoinRequest) {
                 JoinRequest joinRequest = (JoinRequest) message;
-                onNewJoin(joinRequest.joiner);
+                addMember(joinRequest.joiner);
             } else {
                 throw new RuntimeException("Unsupported message type: " + message.getClass().getName());
             }

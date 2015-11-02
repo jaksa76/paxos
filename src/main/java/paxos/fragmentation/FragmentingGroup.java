@@ -1,12 +1,11 @@
 package paxos.fragmentation;
 
 import paxos.*;
+import paxos.communication.CommLayer;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -36,6 +35,7 @@ public class FragmentingGroup {
         byte[] bytes = PaxosUtils.serialize(message);
         MessageFragment[] fragments = FragmentationUtils.performFragmentation(bytes, messageId, FRAGMENT_SIZE);
         for (MessageFragment fragment : fragments) {
+            // TODO send the fragments in parallel
             group.broadcast(fragment);
         }
     }
@@ -71,6 +71,8 @@ public class FragmentingGroup {
                         receiver.receive((Serializable) PaxosUtils.deserialize(collector.extractMessage()));
                     }
                 }
+            } else {
+                System.out.println("don't know about " + message);
             }
         }
     }

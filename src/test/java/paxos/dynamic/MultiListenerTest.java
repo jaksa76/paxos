@@ -2,9 +2,7 @@ package paxos.dynamic;
 
 import org.junit.Test;
 import org.mockito.Mockito;
-import paxos.CommLayer;
-
-import static org.junit.Assert.*;
+import paxos.communication.CommLayer;
 
 public class MultiListenerTest {
 

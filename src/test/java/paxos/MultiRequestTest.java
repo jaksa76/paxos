@@ -1,6 +1,8 @@
 package paxos;
 
 import org.junit.Test;
+import paxos.communication.CommLayer;
+import paxos.communication.Member;
 import paxos.messages.MessageWithSender;
 
 import java.io.Serializable;

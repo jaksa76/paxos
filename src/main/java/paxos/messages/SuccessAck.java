@@ -1,6 +1,6 @@
 package paxos.messages;
 
-import paxos.Member;
+import paxos.communication.Member;
 
 public class SuccessAck implements MessageWithSender, SpecialMessage {
     private final long msgId;

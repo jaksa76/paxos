@@ -1,9 +1,11 @@
 package paxos;
 
+import paxos.communication.CommLayer;
+import paxos.communication.Member;
+import paxos.communication.Tick;
 import paxos.messages.*;
 
 import java.io.Serializable;
-import java.net.UnknownHostException;
 import java.util.*;
 
 public class LeaderLogic implements FailureListener {
@@ -46,6 +48,8 @@ public class LeaderLogic implements FailureListener {
                 case BROADCAST_REQ: onBroadcastRequest((BroadcastRequest) specialMessage); break;
                 case NEW_VIEW: onNewView((NewView) specialMessage); break;
             }
+        } else if (message instanceof Tick) {
+            update((Tick) message);
         }
         for (MultiRequest assistant : new ArrayList<MultiRequest>(assistants)) {
             assistant.receive(message);
@@ -53,9 +57,9 @@ public class LeaderLogic implements FailureListener {
         }
     }
 
-    public synchronized void update() {
+    public synchronized void update(Tick tick) {
         for (MultiRequest assistant : assistants) {
-            assistant.tick(timeProvider.getTime());
+            assistant.tick(tick.time);
         }
     }
 
