@@ -25,7 +25,6 @@ public class LeaderLogicTest {
     private CommLayer messenger;
     private List<Member> members;
     private GroupMembership membership;
-    private TestTimeProvider timeProvider = new TestTimeProvider();
     private long viewNo;
 
     @Test
@@ -37,7 +36,7 @@ public class LeaderLogicTest {
         long seqNo = 0l;
         long msgId = 1l;
 
-        leader = new LeaderLogic(membership, messenger);
+        leader = new LeaderLogic(membership, messenger, 0);
         verify(messenger).sendTo(eq(members), specialMessage(NEW_VIEW));
 
         leader.dispatch(new ViewAccepted(viewNo, EMPTY_MAP, members.get(0)));
@@ -60,7 +59,7 @@ public class LeaderLogicTest {
         membership = createMembership(members, 0);
         messenger = mock(CommLayer.class);
 
-        leader = new LeaderLogic(membership, messenger);
+        leader = new LeaderLogic(membership, messenger, 0);
         verifyNoMoreInteractions((CommLayer) messenger);
     }
 
@@ -128,7 +127,7 @@ public class LeaderLogicTest {
         previousMessages.put(2l, new Acceptance(1, "a", msgId1));
         previousMessages.put(4l, new Acceptance(1, "b", msgId2));
 
-        LeaderLogic newLeader = new LeaderLogic(membership, messenger2);
+        LeaderLogic newLeader = new LeaderLogic(membership, messenger2, 0);
 
         newLeader.memberFailed(members.get(2), new HashSet<Member>(Arrays.asList(members.get(0), members.get(1))));
         verify(messenger2).sendTo(eq(members), specialMessage(NEW_VIEW));
@@ -166,7 +165,7 @@ public class LeaderLogicTest {
         previousMessages.put(2l, new Acceptance(1, "a", msgId1));
         previousMessages.put(4l, new Acceptance(1, "b", msgId2));
 
-        LeaderLogic newLeader = new LeaderLogic(membership, messenger2);
+        LeaderLogic newLeader = new LeaderLogic(membership, messenger2, 0);
 
         newLeader.memberFailed(members.get(2), new HashSet<Member>(Arrays.asList(members.get(0), members.get(1))));
         verify(messenger2).sendTo(eq(members), specialMessage(NEW_VIEW));
@@ -189,7 +188,7 @@ public class LeaderLogicTest {
         membership = createMembership(members, 1);
         CommLayer messenger2 = mock(CommLayer.class);
 
-        LeaderLogic newLeader = new LeaderLogic(membership, messenger2);
+        LeaderLogic newLeader = new LeaderLogic(membership, messenger2, 0);
 
         // take over
         long newViewNo = 4;
@@ -221,7 +220,7 @@ public class LeaderLogicTest {
         previousMessagesFromB.put(2l, new Acceptance(2, "b", msgId2));
 
         Member oldLeader = members.get(3);
-        LeaderLogic newLeader = new LeaderLogic(membership, messenger);
+        LeaderLogic newLeader = new LeaderLogic(membership, messenger, 0);
         newLeader.dispatch(new NewView(oldLeader, 2l));
 
         HashSet<Member> aliveMembers = new HashSet<Member>(members);
@@ -308,7 +307,7 @@ public class LeaderLogicTest {
         messenger = mock(CommLayer.class);
         viewNo = (size*2)-1;
 
-        leader = new LeaderLogic(membership, messenger, timeProvider);
+        leader = new LeaderLogic(membership, messenger, 0);
         performSuccessfulElection(viewNo);
     }
 

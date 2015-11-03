@@ -1,3 +1,5 @@
+// synchronous version of Paxos looks much simpler
+
 class Leader {
   long seqNo;
   long viewNo;

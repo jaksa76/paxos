@@ -2,6 +2,7 @@ package paxos;
 
 import paxos.communication.CommLayer;
 import paxos.communication.Member;
+import paxos.communication.Tick;
 import paxos.messages.MessageWithSender;
 
 import java.io.Serializable;
@@ -19,9 +20,9 @@ public abstract class MultiRequest<T extends Serializable, R extends MessageWith
     private boolean quorumHasBeenReached = false;
     private boolean allMembersHaveReplied = false;
 
-    public MultiRequest(GroupMembership membership, CommLayer messenger, T req) {
-        this(membership, messenger, req, System.currentTimeMillis());
-    }
+//    public MultiRequest(GroupMembership membership, CommLayer messenger, T req) {
+//        this(membership, messenger, req, System.currentTimeMillis());
+//    }
 
     public MultiRequest(GroupMembership membership, CommLayer messenger, T req, long time) {
         this.membership = membership;
@@ -93,6 +94,8 @@ public abstract class MultiRequest<T extends Serializable, R extends MessageWith
      * @param message
      */
     final public void receive(Serializable message) {
+        if (message instanceof Tick) tick(((Tick) message).time);
+
         R resp = filterResponse(message);
         if (resp != null) {
             responses.put(resp.getSender(), resp);

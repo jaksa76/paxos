@@ -12,7 +12,6 @@ public class LeaderLogic implements FailureListener {
     private static final NoOp NO_OP = new NoOp();
     private final GroupMembership membership;
     private final CommLayer messenger;
-    private final TimeProvider timeProvider;
     private final Member me;
     private final Map<Long, Proposal> proposals = new HashMap<Long, Proposal>();
     private final Map<Long, Serializable> successfulMessages = new HashMap<Long, Serializable>();
@@ -23,20 +22,16 @@ public class LeaderLogic implements FailureListener {
     private long viewNumber = 0;
     private long seqNo = 0;
     private boolean iAmElected = false;
+    private long time;
 
-    public LeaderLogic(GroupMembership membership, CommLayer commLayer) {
-        this(membership, commLayer, new DefaultTimeProvider());
-    }
-
-    // for testing
-    LeaderLogic(GroupMembership membership, CommLayer commLayer, TimeProvider timeProvider) {
+    public LeaderLogic(GroupMembership membership, CommLayer commLayer, long time) {
         this.membership = membership;
         this.messenger = commLayer;
-        this.timeProvider = timeProvider;
+        this.time = time;
         this.me = membership.getUID();
         Member leader = PaxosUtils.selectLeader(membership.getMembers());
         if (leader.equals(me)) {
-            assistants.add(new Election(membership, messenger, timeProvider.getTime(), viewNumber + newViewNumber()));
+            assistants.add(new Election(membership, messenger, time, viewNumber + newViewNumber()));
         }
     }
 
@@ -58,6 +53,7 @@ public class LeaderLogic implements FailureListener {
     }
 
     public synchronized void update(Tick tick) {
+        this.time = tick.time;
         for (MultiRequest assistant : assistants) {
             assistant.tick(tick.time);
         }
@@ -104,7 +100,7 @@ public class LeaderLogic implements FailureListener {
     public void memberFailed(Member failedMember, Set<Member> aliveMembers) {
         if (me.equals(PaxosUtils.selectLeader(aliveMembers))) {
             System.out.println(me + ": taking leadership");
-            assistants.add(new Election(membership, messenger, timeProvider.getTime(), newViewNumber()));
+            assistants.add(new Election(membership, messenger, time, newViewNumber()));
         }
     }
 
@@ -186,7 +182,7 @@ public class LeaderLogic implements FailureListener {
         private final long msgId;
 
         public MultiAccept(GroupMembership membership, CommLayer messenger, long seqNo, Serializable message, long msgId) {
-            super(membership, messenger, new Accept(viewNumber, seqNo, message, msgId, me), timeProvider.getTime());
+            super(membership, messenger, new Accept(viewNumber, seqNo, message, msgId, me), time);
             this.seqNo = seqNo;
             this.message = message;
             this.msgId = msgId;
@@ -216,7 +212,7 @@ public class LeaderLogic implements FailureListener {
         private final long msgId;
 
         public MultiSuccess(GroupMembership membership, CommLayer messenger, long seqNo, Serializable msg, long msgId) {
-            super(membership, messenger, new Success(seqNo, msg, msgId), timeProvider.getTime());
+            super(membership, messenger, new Success(seqNo, msg, msgId), time);
             this.seqNo = seqNo;
             this.msgId = msgId;
         }

@@ -16,10 +16,14 @@ public class Group implements UDPMessenger.MessageListener {
     private boolean running = true;
 
     public Group(GroupMembership membership, CommLayer commLayer, Receiver receiver) {
+        this(membership, commLayer, receiver, System.currentTimeMillis());
+    }
+
+    public Group(GroupMembership membership, CommLayer commLayer, Receiver receiver, long time) {
         this.membership = membership;
         this.commLayer = commLayer;
 
-        leaderLogic = new LeaderLogic(membership, commLayer);
+        leaderLogic = new LeaderLogic(membership, commLayer, time);
         acceptorLogic = new AcceptorLogic(membership, commLayer, receiver);
         failureDetector = new FailureDetector(membership, commLayer, leaderLogic);
 

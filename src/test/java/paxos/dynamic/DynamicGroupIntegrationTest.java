@@ -14,9 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.*;
 
 public class DynamicGroupIntegrationTest {
     private Set<DynamicGroup> groups = new HashSet<DynamicGroup>();
@@ -29,10 +27,9 @@ public class DynamicGroupIntegrationTest {
 
     @Test
     public void testSendingMessageToSingleMember() throws Exception {
-        CommLayer commLayer = new UDPMessenger(2440);
         Receiver receiver = mock(Receiver.class);
 
-        DynamicGroup group = new DynamicGroup(commLayer, receiver, 2440, Collections.<Member>emptyList());
+        DynamicGroup group = createGroup(receiver, 2440, Collections.<Member>emptyList());
         group.broadcast("Hello");
 
         verify(receiver).receive("Hello");
@@ -50,14 +47,14 @@ public class DynamicGroupIntegrationTest {
         DynamicGroup group2 = createGroup(receiver2, 2441, Collections.singletonList(members.get(0)));
 
         group2.broadcast("Hello");
-        verify(receiver1).receive("Hello");
-        verify(receiver2).receive("Hello");
+        verify(receiver1, timeout(1000)).receive("Hello");
+        verify(receiver2, timeout(1000)).receive("Hello");
 
         DynamicGroup group3 = createGroup(receiver3, 2442, Collections.singletonList(members.get(1)));
         group3.broadcast("Goodbye");
-        verify(receiver1).receive("Goodbye");
-        verify(receiver2).receive("Goodbye");
-        verify(receiver3).receive("Goodbye");
+        verify(receiver1, timeout(1000)).receive("Goodbye");
+        verify(receiver2, timeout(1000)).receive("Goodbye");
+        verify(receiver3, timeout(1000)).receive("Goodbye");
 
         verifyNoMoreInteractions(receiver1, receiver2, receiver3);
     }
@@ -76,17 +73,17 @@ public class DynamicGroupIntegrationTest {
         Thread.sleep(1000);
 
         group3.broadcast("Hello");
-        verify(receiver1).receive("Hello");
-        verify(receiver2).receive("Hello");
-        verify(receiver3).receive("Hello");
+        verify(receiver1, timeout(1000)).receive("Hello");
+        verify(receiver2, timeout(1000)).receive("Hello");
+        verify(receiver3, timeout(1000)).receive("Hello");
 
         group2.removeMember(members.get(2));
 
         Thread.sleep(1000); // wait till the group membership has taken effect
 
         group2.broadcast("Goodbye");
-        verify(receiver1).receive("Goodbye");
-        verify(receiver2).receive("Goodbye");
+        verify(receiver1, timeout(1000)).receive("Goodbye");
+        verify(receiver2, timeout(1000)).receive("Goodbye");
 
         verifyNoMoreInteractions(receiver1, receiver2, receiver3);
     }

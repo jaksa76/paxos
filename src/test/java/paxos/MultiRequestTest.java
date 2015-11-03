@@ -3,6 +3,7 @@ package paxos;
 import org.junit.Test;
 import paxos.communication.CommLayer;
 import paxos.communication.Member;
+import paxos.communication.Tick;
 import paxos.messages.MessageWithSender;
 
 import java.io.Serializable;
@@ -25,7 +26,7 @@ public class MultiRequestTest {
         final boolean[] quorumReached = new boolean[] {false};
         final boolean[] completed = new boolean[] {false};
 
-        MultiRequest<String, DummyResponse> multiRequest = new MultiRequest<String, DummyResponse>(membership, messenger, "hello") {
+        MultiRequest<String, DummyResponse> multiRequest = new MultiRequest<String, DummyResponse>(membership, messenger, "hello", 0) {
             @Override protected void onQuorumReached() {
                 quorumReached[0] = true;
             }
@@ -36,6 +37,12 @@ public class MultiRequestTest {
         };
 
         verify(messenger).sendTo(members, HELLO_BYTES);
+
+        multiRequest.receive(new Tick(1001));
+
+        verify(messenger).sendTo(members.get(0), HELLO_BYTES);
+        verify(messenger).sendTo(members.get(1), HELLO_BYTES);
+        verify(messenger).sendTo(members.get(2), HELLO_BYTES);
 
         multiRequest.receive(new DummyResponse("yes", members.get(0)));
         assertFalse(quorumReached[0]);
@@ -63,7 +70,7 @@ public class MultiRequestTest {
         final boolean[] quorumReached = new boolean[] {false};
         final boolean[] completed = new boolean[] {false};
 
-        MultiRequest<String, DummyResponse> multiRequest = new MultiRequest<String, DummyResponse>(membership, messenger, "hello", 0l) {
+        MultiRequest<String, DummyResponse> multiRequest = new MultiRequest<String, DummyResponse>(membership, messenger, "hello", 0) {
             @Override
             protected DummyResponse filterResponse(Serializable message) {
                 return (message instanceof DummyResponse) ? (DummyResponse) message : null;
@@ -77,6 +84,10 @@ public class MultiRequestTest {
                 completed[0] = true;
             }
         };
+
+        verify(messenger).sendTo(members, HELLO_BYTES);
+
+        multiRequest.receive(new Tick(1000));
 
         multiRequest.receive(new WrongResponse("yes", members.get(0)));
         multiRequest.receive(new WrongResponse("yes", members.get(1)));
@@ -95,7 +106,7 @@ public class MultiRequestTest {
         final boolean[] quorumReached = new boolean[] {false};
         final boolean[] completed = new boolean[] {false};
 
-        MultiRequest<String, DummyResponse> multiRequest = new MultiRequest<String, DummyResponse>(membership, messenger, "hello", 0l) {
+        MultiRequest<String, DummyResponse> multiRequest = new MultiRequest<String, DummyResponse>(membership, messenger, "hello", 0) {
             @Override protected void onQuorumReached() {
                 quorumReached[0] = true;
             }
@@ -106,6 +117,12 @@ public class MultiRequestTest {
         };
 
         verify(messenger).sendTo(members, HELLO_BYTES);
+
+        multiRequest.receive(new Tick(1001));
+
+        verify(messenger).sendTo(members.get(0), HELLO_BYTES);
+        verify(messenger).sendTo(members.get(1), HELLO_BYTES);
+        verify(messenger).sendTo(members.get(2), HELLO_BYTES);
 
         multiRequest.receive(new DummyResponse("yes", members.get(0)));
         assertFalse(quorumReached[0]);
