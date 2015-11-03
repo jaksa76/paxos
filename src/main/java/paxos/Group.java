@@ -6,14 +6,25 @@ import paxos.communication.UDPMessenger;
 
 import java.io.Serializable;
 
-public class Group implements UDPMessenger.MessageListener {
+/**
+ * This is the basic totally ordered reliable broadcast implementation. It has static membership and it doesn't
+ * fragment messages. If the underlying communication layer doesn't fragment messages either, it
+ * will keep on failing to transmit. In order to support larger messages you can use the
+ * {@link paxos.fragmentation.FragmentingMessenger} along with this class.
+ * {@link paxos.fragmentation.FragmentingGroup} might be a better choice because it should deal better
+ * with unreliable communication.
+ *
+ * This class does not persist state, thus it doesn't support recovery of members.
+ *
+ * @see paxos.dynamic.DynamicGroup
+ * @see paxos.fragmentation.FragmentingGroup
+ **/
+public class Group implements CommLayer.MessageListener {
     private final AcceptorLogic acceptorLogic;
     private final LeaderLogic leaderLogic;
     private final FailureDetector failureDetector;
     private final GroupMembership membership;
     private final CommLayer commLayer;
-
-    private boolean running = true;
 
     public Group(GroupMembership membership, CommLayer commLayer, Receiver receiver) {
         this(membership, commLayer, receiver, System.currentTimeMillis());
@@ -35,7 +46,6 @@ public class Group implements UDPMessenger.MessageListener {
     }
 
     public void close() {
-        this.running = false;
         commLayer.close();
     }
 
@@ -43,10 +53,6 @@ public class Group implements UDPMessenger.MessageListener {
         leaderLogic.dispatch(message);
         acceptorLogic.dispatch(message);
         failureDetector.dispatch(message);
-    }
-
-    public int getPositionInGroup() {
-        return membership.getPositionInGroup();
     }
 
     public void receive(byte[] message) {

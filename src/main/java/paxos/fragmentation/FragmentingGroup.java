@@ -9,6 +9,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * This class implements totally ordered reliable broadcast. As opposed to {}@link Group} this class
+ * supports messages that are larger than a UDP packet.
+ */
 public class FragmentingGroup {
 
     public static final int FRAGMENT_SIZE = 64000;

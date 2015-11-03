@@ -13,6 +13,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * This class implements totally ordered reliable broadcast and it is also able to dynamically change
+ * the members of the group as long as the majority of the members is reachable.
+ */
 public class DynamicGroup implements Receiver {
     public static final int BUFFER_SIZE = 128*1024;
 

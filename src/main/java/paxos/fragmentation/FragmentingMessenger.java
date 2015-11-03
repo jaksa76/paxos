@@ -12,6 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * This communication layer fragments messages that cannot
+ */
 public class FragmentingMessenger implements CommLayer, UDPMessenger.MessageListener {
 
     public static final int FRAGMENT_SIZE = 64000;
