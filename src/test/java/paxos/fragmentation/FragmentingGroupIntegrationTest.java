@@ -10,11 +10,14 @@ import paxos.communication.UDPMessenger;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static paxos.TestUtils.*;
 
@@ -32,41 +35,30 @@ public class FragmentingGroupIntegrationTest {
         }
     }
 
-
     @Test
     public void testTransmittingShortMessage() throws Exception {
         Receiver receiver = Mockito.mock(Receiver.class);
         List<Member> members = createMembersOnLocalhost(3);
-        FragmentingGroup group1 = new FragmentingGroup(createMembership(members, 0), new UDPMessenger(2440), null);
-        FragmentingGroup group2 = new FragmentingGroup(createMembership(members, 1), new UDPMessenger(2441), receiver);
-        FragmentingGroup group3 = new FragmentingGroup(createMembership(members, 2), new UDPMessenger(2442), null);
-        groups.addAll(asSet(group1, group2, group3));
-
-        Thread.sleep(500);
+        FragmentingGroup group1 = createGroup(members, 0, 2440);
+        FragmentingGroup group2 = createGroup(members, 1, 2441, receiver);
+        FragmentingGroup group3 = createGroup(members, 2, 2442);
 
         group1.broadcast("Hello");
 
-        Thread.sleep(100);
-
-        verify(receiver).receive(eq("Hello"));
+        verify(receiver, timeout(1000)).receive(eq("Hello"));
     }
 
     @Test
     public void testTransmittingLongMessage() throws Exception {
         Receiver receiver = Mockito.mock(Receiver.class);
         List<Member> members = createMembersOnLocalhost(3);
-        FragmentingGroup group1 = new FragmentingGroup(createMembership(members, 0), new UDPMessenger(2440), null);
-        FragmentingGroup group2 = new FragmentingGroup(createMembership(members, 1), new UDPMessenger(2441), receiver);
-        FragmentingGroup group3 = new FragmentingGroup(createMembership(members, 2), new UDPMessenger(2442), null);
-        groups.addAll(asSet(group1, group2, group3));
-
-        Thread.sleep(500);
+        FragmentingGroup group1 = createGroup(members, 0, 2440);
+        FragmentingGroup group2 = createGroup(members, 1, 2441, receiver);
+        FragmentingGroup group3 = createGroup(members, 2, 2442);
 
         group1.broadcast(MESSAGE_TO_SEND);
 
-        Thread.sleep(100);
-
-        verify(receiver).receive(eq(MESSAGE_TO_SEND));
+        verify(receiver, timeout(1000)).receive(eq(MESSAGE_TO_SEND));
     }
 
     @Test
@@ -90,15 +82,22 @@ public class FragmentingGroupIntegrationTest {
         }
     }
 
-
     private FragmentingGroup[] createEndpoints(List<Member> members, Receiver[] receivers) throws IOException, InterruptedException {
         final FragmentingGroup[] endpoints = new FragmentingGroup[members.size()];
         for (int i = 0; i < members.size(); i++) {
-            endpoints[i] = new FragmentingGroup(createMembership(members, i), new UDPMessenger(members.get(i).getPort()), receivers[i]);
-            groups.add(endpoints[i]);
+            endpoints[i] = createGroup(members, i, members.get(i).getPort(), receivers[i]);
         }
-        Thread.sleep(500); // allow some time for leader election
         return endpoints;
+    }
+
+    private FragmentingGroup createGroup(List<Member> members, int n, int port) throws SocketException, UnknownHostException {
+        return createGroup(members, n, port, null);
+    }
+
+    private FragmentingGroup createGroup(List<Member> members, int n, int port, Receiver receiver) throws SocketException, UnknownHostException {
+        FragmentingGroup group = new FragmentingGroup(createMembership(members, n), new UDPMessenger(port), receiver);
+        groups.add(group);
+        return group;
     }
 
     public static class CountingReceiver implements Receiver {
@@ -119,9 +118,9 @@ public class FragmentingGroupIntegrationTest {
     }
 
     private static class Sender extends Thread {
-
         private final int i;
         private final FragmentingGroup endpoint;
+
         public Sender(int i, FragmentingGroup endpoint) {
             this.i = i;
             this.endpoint = endpoint;
@@ -131,12 +130,10 @@ public class FragmentingGroupIntegrationTest {
         public void run() {
             for (int j = 0; j < MESSAGES_TO_SEND; j++) {
                 try {
-
                     endpoint.broadcast(MESSAGE_TO_SEND);
                 } catch (Exception e) { e.printStackTrace(); }
             }
         }
-
     }
 
     private void findDuplicates(List<String> messages) {
@@ -144,9 +141,7 @@ public class FragmentingGroupIntegrationTest {
         if (messages.size() != MESSAGES_TO_SEND * GROUP_SIZE) {
             // find duplicate
             for (String msg : messages) {
-                if (messagesFound.contains(msg)) {
-                    System.out.println("duplicate message " + msg);
-                }
+                if (messagesFound.contains(msg)) System.out.println("duplicate message " + msg);
                 messagesFound.add(msg);
             }
         }
@@ -160,9 +155,7 @@ public class FragmentingGroupIntegrationTest {
 
     static private byte[] createMessageOfLength(int length) {
         byte[] bytes = new byte[length];
-        for (int i = 0; i < length; i++) {
-            bytes[i] = (byte) (i%256);
-        }
+        for (int i = 0; i < length; i++) bytes[i] = (byte) (i % 256);
         return bytes;
     }
 }

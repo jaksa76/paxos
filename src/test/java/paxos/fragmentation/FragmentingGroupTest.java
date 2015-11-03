@@ -55,10 +55,7 @@ public class FragmentingGroupTest {
 
     private MessageFragment createMessageFragment(long id, int i, int parts) throws IOException {
         Serializable message = createMessageOfLength(parts * 100);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(baos);
-        oos.writeObject(message);
-        byte[] allBytes = baos.toByteArray();
+        byte[] allBytes = PaxosUtils.serialize(message);
         byte[] bytes = Arrays.copyOfRange(allBytes, i * 100, Math.min(i * 100 + 100, allBytes.length));
         return new MessageFragment(id, bytes, i, parts + 1);
     }
