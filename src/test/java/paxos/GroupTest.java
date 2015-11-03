@@ -43,7 +43,7 @@ public class GroupTest {
         Group group = createGroup(membership);
         verifyNoMoreInteractions(commLayer);
 
-        group.receive(TestUtils.tick(5000));
+        group.receive(TestUtils.tick(5000)); // this should be enough to trigger the failure detection
         verify(commLayer).sendTo(eq(members), message(instanceOf(NewView.class)));
     }
 
