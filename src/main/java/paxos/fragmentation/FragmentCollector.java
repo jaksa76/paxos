@@ -4,10 +4,16 @@ import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 
+/**
+ * A utility class for collecting fragments of a single message.
+ */
 class FragmentCollector {
     private final byte[][] parts;
     private int partsReceived = 0;
 
+    /**
+     * @param parts the number of parts that need to be collected
+     */
     public FragmentCollector(int parts) {
         this.parts = new byte[parts][];
     }
@@ -20,7 +26,7 @@ class FragmentCollector {
     public boolean isComplete() {
         if (partsReceived < parts.length) return false; // this is just an optimisation
 
-        // we still need this if we received the same message twice
+        // we still need this in case we received the same message twice
         for (byte[] part : parts) {
             if (part == null) return false;
         }

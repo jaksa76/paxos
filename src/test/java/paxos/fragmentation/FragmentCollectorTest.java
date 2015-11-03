@@ -4,45 +4,45 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import paxos.PaxosUtils;
 
-import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
 
 public class FragmentCollectorTest {
 
-    public static final String TEXT = "The quick brown fox jumps over the lazy dog.";
+    public static final byte[] MSG = PaxosUtils.serialize("The quick brown fox jumps over the lazy dog.");
 
     @Test
     public void testCollectingOneFragment() throws Exception {
         FragmentCollector collector = new FragmentCollector(1);
 
-        byte[][] fragments = fragment(TEXT, 100);
+        byte[][] fragments = fragment(MSG, 100);
 
         collector.addPart(0, fragments[0]);
         assertThat(collector.isComplete(), is(true));
-        assertThat((Serializable) PaxosUtils.deserialize(collector.extractMessage()), CoreMatchers.<Serializable>is("The quick brown fox jumps over the lazy dog."));
+        assertThat(collector.extractMessage(), equalTo(MSG));
     }
 
     @Test
     public void testCollectingTwoFragment() throws Exception {
         FragmentCollector collector = new FragmentCollector(2);
 
-        byte[][] fragments = fragment(TEXT, 30);
+        byte[][] fragments = fragment(MSG, 30);
 
         collector.addPart(0, fragments[0]);
         assertThat(collector.isComplete(), is(false));
         collector.addPart(1, fragments[1]);
         assertThat(collector.isComplete(), is(true));
-        assertThat((Serializable) PaxosUtils.deserialize(collector.extractMessage()), CoreMatchers.<Serializable>is(TEXT));
+        assertThat(collector.extractMessage(), equalTo(MSG));
     }
 
     @Test
     public void testCollectingThreeFragment() throws Exception {
         FragmentCollector collector = new FragmentCollector(3);
 
-        byte[][] fragments = fragment(TEXT, 20);
+        byte[][] fragments = fragment(MSG, 20);
 
         collector.addPart(2, fragments[2]);
         assertThat(collector.isComplete(), is(false));
@@ -50,14 +50,14 @@ public class FragmentCollectorTest {
         assertThat(collector.isComplete(), is(false));
         collector.addPart(0, fragments[0]);
         assertThat(collector.isComplete(), is(true));
-        assertThat((Serializable) PaxosUtils.deserialize(collector.extractMessage()), CoreMatchers.<Serializable>is(TEXT));
+        assertThat(collector.extractMessage(), equalTo(MSG));
     }
 
     @Test
     public void testReceivingTwiceTheSameFragment() throws Exception {
         FragmentCollector collector = new FragmentCollector(3);
 
-        byte[][] fragments = fragment(TEXT, 20);
+        byte[][] fragments = fragment(MSG, 20);
 
         collector.addPart(2, fragments[2]);
         assertThat(collector.isComplete(), is(false));
@@ -67,12 +67,12 @@ public class FragmentCollectorTest {
         assertThat(collector.isComplete(), is(false));
         collector.addPart(0, fragments[0]);
         assertThat(collector.isComplete(), is(true));
-        assertThat((Serializable) PaxosUtils.deserialize(collector.extractMessage()), CoreMatchers.<Serializable>is(TEXT));
+
+        assertThat(collector.extractMessage(), equalTo(MSG));
     }
 
 
-    private byte[][] fragment(String message, int size) {
-        byte[] bytes = PaxosUtils.serialize(message);
+    private byte[][] fragment(byte[] bytes, int size) {
         byte[][] parts = new byte[(int) Math.ceil(bytes.length/((double)size))][];
         for (int i = 0; i < parts.length; i++) {
             int offset = i*size;

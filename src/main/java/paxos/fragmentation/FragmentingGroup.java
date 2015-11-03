@@ -54,7 +54,7 @@ public class FragmentingGroup {
 
     static class JoinerReceiver implements Receiver {
         private final Receiver receiver;
-        private Map<Long, FragmentCollector> collectors = new HashMap<Long, FragmentCollector>();
+        private final MessageReconstructor messageReconstructor = new MessageReconstructor();
 
         public JoinerReceiver(Receiver receiver) {
             this.receiver = receiver;
@@ -62,22 +62,16 @@ public class FragmentingGroup {
 
         public void receive(Serializable message) {
             if (message instanceof MessageFragment) {
-                MessageFragment messageFragment = (MessageFragment) message;
-                if (!collectors.containsKey(messageFragment.id)) {
-                    collectors.put(messageFragment.id, new FragmentCollector(messageFragment.totalFragments));
-                }
-                FragmentCollector collector = collectors.get(messageFragment.id);
-                collector.addPart(messageFragment.fragmentNo, messageFragment.part);
-
-                if (collector.isComplete()) {
-                    collectors.remove(messageFragment.id);
-                    if (receiver != null) {
-                        receiver.receive((Serializable) PaxosUtils.deserialize(collector.extractMessage()));
-                    }
-                }
+                collectFragment((MessageFragment) message);
             } else {
                 System.out.println("don't know about " + message);
             }
+        }
+
+        private void collectFragment(MessageFragment fragment) {
+            byte[] completeMsg = messageReconstructor.collectFragment(fragment);
+            if (completeMsg != null && receiver != null)
+                receiver.receive((Serializable) PaxosUtils.deserialize(completeMsg));
         }
     }
 }

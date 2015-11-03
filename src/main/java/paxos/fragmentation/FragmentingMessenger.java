@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class FragmentingMessenger implements CommLayer, UDPMessenger.MessageListener {
 
     public static final int FRAGMENT_SIZE = 64000;
-    private final Map<Long, FragmentCollector> collectors = new HashMap<Long, FragmentCollector>();
+    private final MessageReconstructor messageReconstructor = new MessageReconstructor();
     private final CommLayer messenger;
     private UDPMessenger.MessageListener upstreamListener;
     private AtomicLong msgIdGen = new AtomicLong(0);
@@ -68,19 +68,7 @@ public class FragmentingMessenger implements CommLayer, UDPMessenger.MessageList
     }
 
     private void collectFragment(MessageFragment messageFragment) {
-        FragmentCollector collector = getOrCreateCollector(messageFragment);
-        collector.addPart(messageFragment.fragmentNo, messageFragment.part);
-
-        if (collector.isComplete()) {
-            collectors.remove(messageFragment.id);
-            if (upstreamListener != null) upstreamListener.receive(collector.extractMessage());
-        }
-    }
-
-    private FragmentCollector getOrCreateCollector(MessageFragment messageFragment) {
-        if (!collectors.containsKey(messageFragment.id)) {
-            collectors.put(messageFragment.id, new FragmentCollector(messageFragment.totalFragments));
-        }
-        return collectors.get(messageFragment.id);
+        byte[] completeMsg = messageReconstructor.collectFragment(messageFragment);
+        if (completeMsg != null && upstreamListener != null) upstreamListener.receive(completeMsg);
     }
 }
