@@ -4,11 +4,14 @@ import paxos.*;
 import paxos.communication.CommLayer;
 import paxos.communication.Member;
 import paxos.communication.Tick;
+import paxos.communication.UDPMessenger;
 import paxos.fragmentation.FragmentingGroup;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -29,6 +32,18 @@ public class DynamicGroup implements Receiver {
     private final Receiver receiver;
     private List<Member> members;
     private MultiListener multiListener = new MultiListener();
+
+    public DynamicGroup(Member knownMember, Receiver receiver) throws IOException, InterruptedException {
+        this(new UDPMessenger(), receiver, 2440, Collections.singletonList(knownMember));
+    }
+
+    public DynamicGroup(int port, Member knownMember, Receiver receiver) throws IOException, InterruptedException {
+        this(new UDPMessenger(port), receiver, port, Collections.singletonList(knownMember));
+    }
+
+    public DynamicGroup(int port, List<Member> knownMembers, Receiver receiver) throws IOException, InterruptedException {
+        this(new UDPMessenger(port), receiver, port, knownMembers);
+    }
 
     public DynamicGroup(CommLayer commLayer, Receiver receiver, int port, List<Member> knownMembers) throws IOException, InterruptedException {
         this.commLayer = commLayer;

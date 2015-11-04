@@ -11,6 +11,7 @@ import java.util.Collections;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 public class DynamicGroupTest {
@@ -36,6 +37,6 @@ public class DynamicGroupTest {
 
         verify(commLayer).sendTo((Member) any(), (byte[]) any());
 
-//        verify(receiver).receive("Hello");
+//        verify(receiver, timeout(1000)).receive("Hello");
     }
 }

@@ -20,6 +20,10 @@ public class UDPMessenger implements CommLayer {
     private boolean running = true;
     private BlockingQueue<byte[]> msgQueue = new LinkedBlockingQueue<byte[]>();
 
+    public UDPMessenger() throws SocketException, UnknownHostException {
+        this(2440);
+    }
+
     public UDPMessenger(int port) throws SocketException, UnknownHostException {
         this.socket = new DatagramSocket(port);
         socket.setReuseAddress(true);

@@ -4,6 +4,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
+import paxos.PaxosUtils;
 import paxos.communication.Member;
 import paxos.Receiver;
 import paxos.communication.UDPMessenger;
@@ -46,6 +47,28 @@ public class FragmentingGroupIntegrationTest {
         group1.broadcast("Hello");
 
         verify(receiver, timeout(1000)).receive(eq("Hello"));
+    }
+
+    @Test
+    public void testTransmittingShortMessages() throws Exception {
+        List<Member> members = createMembersOnLocalhost(GROUP_SIZE);
+        Receiver[] receivers = createReceivers(GROUP_SIZE);
+        FragmentingGroup[] endpoints = createEndpoints(members, receivers);
+
+        long start = System.currentTimeMillis();
+
+        byte[] msg = PaxosUtils.serialize("Hello");
+        Thread[] senders = createSenders(endpoints, msg, 1000);
+        waitTillFinished(senders);
+
+        double delta = (System.currentTimeMillis() - start) / 1000.0; // in seconds
+        System.out.println("time taken: " + delta);
+        System.out.println("req/s: " + (1000 * GROUP_SIZE / delta));
+
+        for (Receiver receiver : receivers) {
+            CountingReceiver countingReceiver = (CountingReceiver) receiver;
+            Assert.assertEquals(1000 * GROUP_SIZE, countingReceiver.msgCount);
+        }
     }
 
     @Test
@@ -109,9 +132,13 @@ public class FragmentingGroupIntegrationTest {
     }
 
     private Thread[] createSenders(FragmentingGroup[] endpoints) {
+        return createSenders(endpoints, MESSAGE_TO_SEND, MESSAGES_TO_SEND);
+    }
+
+    private Thread[] createSenders(FragmentingGroup[] endpoints, byte[] message, int nMessages) {
         Thread[] senders = new Thread[endpoints.length];
         for (int i = 0; i < endpoints.length; i++) {
-            senders[i] = new Sender(i, endpoints[i]);
+            senders[i] = new Sender(i, endpoints[i], message, nMessages);
             senders[i].start();
         }
         return senders;
@@ -120,17 +147,21 @@ public class FragmentingGroupIntegrationTest {
     private static class Sender extends Thread {
         private final int i;
         private final FragmentingGroup endpoint;
+        private final byte[] message;
+        private final int nMessages;
 
-        public Sender(int i, FragmentingGroup endpoint) {
+        public Sender(int i, FragmentingGroup endpoint, byte[] message, int nMessages) {
             this.i = i;
             this.endpoint = endpoint;
+            this.message = message;
+            this.nMessages = nMessages;
         }
 
         @Override
         public void run() {
-            for (int j = 0; j < MESSAGES_TO_SEND; j++) {
+            for (int j = 0; j < nMessages; j++) {
                 try {
-                    endpoint.broadcast(MESSAGE_TO_SEND);
+                    endpoint.broadcast(message);
                 } catch (Exception e) { e.printStackTrace(); }
             }
         }

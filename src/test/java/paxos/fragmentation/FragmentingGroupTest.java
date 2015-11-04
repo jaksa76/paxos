@@ -3,18 +3,12 @@ package paxos.fragmentation;
 import org.hamcrest.CustomTypeSafeMatcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Test;
-import org.mockito.Matchers;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import paxos.*;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.List;
 
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.*;
@@ -22,7 +16,7 @@ import static org.mockito.Mockito.*;
 public class FragmentingGroupTest {
     @Test
     public void testNotFragmentingMessage() throws Exception {
-        Group underlyingGroup = mock(Group.class);
+        BasicGroup underlyingGroup = mock(BasicGroup.class);
         FragmentingGroup group = new FragmentingGroup(underlyingGroup, 0);
         group.broadcast(createMessageOfLength(60000));
 
@@ -31,7 +25,7 @@ public class FragmentingGroupTest {
 
     @Test
     public void testFragmentingMessage() throws Exception {
-        Group underlyingGroup = mock(Group.class);
+        BasicGroup underlyingGroup = mock(BasicGroup.class);
         FragmentingGroup group = new FragmentingGroup(underlyingGroup, 0);
         group.broadcast(createMessageOfLength(3 * 64000 + 100));
 

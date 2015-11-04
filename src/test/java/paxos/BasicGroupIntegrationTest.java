@@ -21,11 +21,11 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static paxos.TestUtils.*;
 
-public class GroupIntegrationTest {
-    private final Set<Group> groups = new HashSet<Group>();
+public class BasicGroupIntegrationTest {
+    private final Set<BasicGroup> groups = new HashSet<BasicGroup>();
 
     @After public void tearDown() throws InterruptedException {
-        for (Group group : groups) {
+        for (BasicGroup group : groups) {
             group.close();
         }
         Thread.sleep(500);
@@ -35,9 +35,9 @@ public class GroupIntegrationTest {
     public void testBroadcast() throws Exception {
         Receiver receiver = Mockito.mock(Receiver.class);
         List<Member> members = createMembersOnLocalhost(3);
-        Group group1 = new Group(createMembership(members, 0), new UDPMessenger(2440), null);
-        Group group2 = new Group(createMembership(members, 1), new UDPMessenger(2441), receiver);
-        Group group3 = new Group(createMembership(members, 2), new UDPMessenger(2442), null);
+        BasicGroup group1 = new BasicGroup(createMembership(members, 0), new UDPMessenger(2440), null);
+        BasicGroup group2 = new BasicGroup(createMembership(members, 1), new UDPMessenger(2441), receiver);
+        BasicGroup group3 = new BasicGroup(createMembership(members, 2), new UDPMessenger(2442), null);
         groups.addAll(asSet(group1, group2, group3));
 
         Thread.sleep(500);
@@ -54,7 +54,7 @@ public class GroupIntegrationTest {
         int groupSize = 5;
         List<Member> members = createMembersOnLocalhost(groupSize);
         Receiver[] receivers = createReceivers(groupSize);
-        Group[] endpoints = createEndpoints(members, receivers);
+        BasicGroup[] endpoints = createEndpoints(members, receivers);
 
         long start = System.currentTimeMillis();
 
@@ -76,7 +76,7 @@ public class GroupIntegrationTest {
         int groupSize = 3;
         List<Member> members = createMembersOnLocalhost(groupSize);
         Receiver[] receivers = createCalculatingReceivers(groupSize);
-        Group[] endpoints = createEndpoints(members, receivers);
+        BasicGroup[] endpoints = createEndpoints(members, receivers);
 
         Thread[] senders = createCalculatingSenders(endpoints);
         waitTillFinished(senders);
@@ -92,8 +92,8 @@ public class GroupIntegrationTest {
         int groupSize = 5;
         List<Member> members = createMembersOnLocalhost(groupSize);
         Receiver[] receivers = createReceivers(groupSize);
-        Group[] endpoints = createEndpoints(members, receivers);
-        Group leader = endpoints[groupSize-1];
+        BasicGroup[] endpoints = createEndpoints(members, receivers);
+        BasicGroup leader = endpoints[groupSize-1];
 
         Thread[] senders = new Thread[endpoints.length-1];
         for (int i = 0; i < senders.length; i++) {
@@ -116,7 +116,7 @@ public class GroupIntegrationTest {
         int groupSize = 3;
         List<Member> members = createMembersOnLocalhost(groupSize);
         Receiver[] receivers = createMockReceivers(groupSize);
-        Group[] endpoints = createEndpoints(members, receivers);
+        BasicGroup[] endpoints = createEndpoints(members, receivers);
 
         endpoints[0].broadcast("Hello");
         verify(receivers[1], timeout(1000)).receive(eq("Hello"));
@@ -127,10 +127,10 @@ public class GroupIntegrationTest {
         verify(receivers[1], timeout(1000)).receive(eq("Goodbye"));
     }
 
-    private Group[] createEndpoints(List<Member> members, Receiver[] receivers) throws IOException, InterruptedException {
-        final Group[] endpoints = new Group[members.size()];
+    private BasicGroup[] createEndpoints(List<Member> members, Receiver[] receivers) throws IOException, InterruptedException {
+        final BasicGroup[] endpoints = new BasicGroup[members.size()];
         for (int i = 0; i < members.size(); i++) {
-            endpoints[i] = new Group(createMembership(members, i), new UDPMessenger(members.get(i).getPort()), receivers[i]);
+            endpoints[i] = new BasicGroup(createMembership(members, i), new UDPMessenger(members.get(i).getPort()), receivers[i]);
             groups.add(endpoints[i]);
         }
         Thread.sleep(500); // allow some time for leader election
@@ -155,7 +155,7 @@ public class GroupIntegrationTest {
         return receivers;
     }
 
-    private Thread[] createSenders(Group[] endpoints) {
+    private Thread[] createSenders(BasicGroup[] endpoints) {
         Thread[] senders = new Thread[endpoints.length];
         for (int i = 0; i < endpoints.length; i++) {
             senders[i] = new Sender(i, endpoints[i]);
@@ -164,7 +164,7 @@ public class GroupIntegrationTest {
         return senders;
     }
 
-    private Thread[] createCalculatingSenders(Group[] endpoints) {
+    private Thread[] createCalculatingSenders(BasicGroup[] endpoints) {
         Thread[] senders = new Thread[endpoints.length];
         for (int i = 0; i < endpoints.length; i++) {
             senders[i] = new CalculatingSender(endpoints[i]);
@@ -200,8 +200,8 @@ public class GroupIntegrationTest {
 
     private static class Sender extends Thread {
         private final int i;
-        private final Group endpoint;
-        public Sender(int i, Group endpoint) {
+        private final BasicGroup endpoint;
+        public Sender(int i, BasicGroup endpoint) {
             this.i = i;
             this.endpoint = endpoint;
         }
@@ -218,8 +218,8 @@ public class GroupIntegrationTest {
     }
 
     private static class CalculatingSender extends Thread {
-        private final Group endpoint;
-        public CalculatingSender(Group endpoint) {
+        private final BasicGroup endpoint;
+        public CalculatingSender(BasicGroup endpoint) {
             this.endpoint = endpoint;
         }
 

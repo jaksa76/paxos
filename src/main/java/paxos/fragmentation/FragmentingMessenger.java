@@ -7,6 +7,8 @@ import paxos.communication.Member;
 import paxos.PaxosUtils;
 
 import java.io.Serializable;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +24,14 @@ public class FragmentingMessenger implements CommLayer, UDPMessenger.MessageList
     private final CommLayer messenger;
     private UDPMessenger.MessageListener upstreamListener;
     private AtomicLong msgIdGen = new AtomicLong(0);
+
+    public FragmentingMessenger() throws SocketException, UnknownHostException {
+        this(new UDPMessenger());
+    }
+
+    public FragmentingMessenger(int port) throws SocketException, UnknownHostException {
+        this(new UDPMessenger(port));
+    }
 
     public FragmentingMessenger(CommLayer messenger) {
         this.messenger = messenger;

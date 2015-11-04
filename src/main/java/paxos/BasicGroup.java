@@ -1,10 +1,11 @@
 package paxos;
 
 import paxos.communication.CommLayer;
-import paxos.communication.Tick;
 import paxos.communication.UDPMessenger;
 
 import java.io.Serializable;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 
 /**
  * This is the basic totally ordered reliable broadcast implementation. It has static membership and it doesn't
@@ -19,20 +20,26 @@ import java.io.Serializable;
  * @see paxos.dynamic.DynamicGroup
  * @see paxos.fragmentation.FragmentingGroup
  **/
-public class Group implements CommLayer.MessageListener {
+public class BasicGroup implements CommLayer.MessageListener {
     private final AcceptorLogic acceptorLogic;
     private final LeaderLogic leaderLogic;
     private final FailureDetector failureDetector;
     private final GroupMembership membership;
     private final CommLayer commLayer;
 
-    // TODO hide commLayer from the user
+    public BasicGroup(GroupMembership membership, Receiver receiver) throws SocketException, UnknownHostException {
+        this(membership, new UDPMessenger(), receiver);
+    }
 
-    public Group(GroupMembership membership, CommLayer commLayer, Receiver receiver) {
+    public BasicGroup(GroupMembership membership, int port, Receiver receiver) throws SocketException, UnknownHostException {
+        this(membership, new UDPMessenger(port), receiver);
+    }
+
+    public BasicGroup(GroupMembership membership, CommLayer commLayer, Receiver receiver) {
         this(membership, commLayer, receiver, System.currentTimeMillis());
     }
 
-    public Group(GroupMembership membership, CommLayer commLayer, Receiver receiver, long time) {
+    public BasicGroup(GroupMembership membership, CommLayer commLayer, Receiver receiver, long time) {
         this.membership = membership;
         this.commLayer = commLayer;
 

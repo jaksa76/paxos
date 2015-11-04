@@ -5,34 +5,30 @@ import paxos.communication.CommLayer;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * This class implements totally ordered reliable broadcast. As opposed to {}@link Group} this class
+ * This class implements totally ordered reliable broadcast. As opposed to {}@link BasicGroup} this class
  * supports messages that are larger than a UDP packet.
  */
 public class FragmentingGroup {
 
     public static final int FRAGMENT_SIZE = 64000;
 
-    private final Group group;
+    private final BasicGroup group;
     private final int myPositionInGroup;
     private AtomicLong msgIdGen = new AtomicLong(0);
 
-
     public FragmentingGroup(GroupMembership membership, CommLayer layer, Receiver receiver) {
-        this.group = new Group(membership, new FragmentingMessenger(layer), new JoinerReceiver(receiver));
+        this.group = new BasicGroup(membership, new FragmentingMessenger(layer), new JoinerReceiver(receiver));
         this.myPositionInGroup = membership.getPositionInGroup();
     }
 
     // for testing
-    FragmentingGroup(Group group, int position) {
+    FragmentingGroup(BasicGroup group, int position) {
         this.group = group;
         this.myPositionInGroup = position;
     }
-
 
     public void broadcast(Serializable message) throws IOException {
         long messageId = createMsgId(message);
