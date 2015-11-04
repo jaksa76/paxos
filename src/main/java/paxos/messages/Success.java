@@ -2,6 +2,9 @@ package paxos.messages;
 
 import java.io.Serializable;
 
+/**
+ * Sent by the leader to confirm that a quorum of members have accepted a message.
+ */
 public class Success implements SpecialMessage {
     public long seqNo;
     public Serializable message;

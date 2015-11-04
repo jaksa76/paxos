@@ -5,6 +5,9 @@ import paxos.communication.Member;
 
 import java.util.Map;
 
+/**
+ * Sent by an acceptor in response to the {@link NewView} message to acknowledge the leader election.
+ */
 public class ViewAccepted implements SpecialMessage, MessageWithSender {
     public final long viewNumber;
     public final Map<Long, Acceptance> accepted;

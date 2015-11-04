@@ -5,6 +5,9 @@ import paxos.communication.Member;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Represents the members of the group. The members should not change.
+ */
 public class GroupMembership {
     private final List<Member> members;
     private final Member me;

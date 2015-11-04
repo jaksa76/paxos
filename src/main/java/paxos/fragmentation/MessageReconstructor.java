@@ -6,13 +6,11 @@ import paxos.communication.UDPMessenger;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Collects fragments of messages and recomposes them.
+ */
 public class MessageReconstructor {
     private final Map<Long, FragmentCollector> collectors = new HashMap<Long, FragmentCollector>();
-    private UDPMessenger.MessageListener upstreamListener;
-
-    public void setListener(CommLayer.MessageListener listener) {
-        this.upstreamListener = listener;
-    }
 
     /**
      * @param messageFragment

@@ -2,6 +2,9 @@ package paxos.messages;
 
 import java.io.Serializable;
 
+/**
+ * Sent to the leader to ask the leader to start a broadcast protocol for the given message.
+ */
 public class BroadcastRequest implements SpecialMessage {
     public Serializable message;
     public long msgId;

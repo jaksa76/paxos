@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * This communication layer fragments messages that cannot
+ * This communication layer fragments messages that cannot fit into a UDP packet.
  */
 public class FragmentingMessenger implements CommLayer, UDPMessenger.MessageListener {
 

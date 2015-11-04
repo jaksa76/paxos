@@ -9,6 +9,13 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Utility class to perform multiple request/response interactions. It has template methods for receiving
+ * responses, reaching majority and reching all responses.
+ *
+ * @param <T> the type of the request message
+ * @param <R> the type of the response message
+ */
 public abstract class MultiRequest<T extends Serializable, R extends MessageWithSender> {
     public static final int RESEND_INTERVAL = 1000;
     private final GroupMembership membership;

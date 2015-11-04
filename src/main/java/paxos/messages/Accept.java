@@ -4,6 +4,9 @@ import paxos.communication.Member;
 
 import java.io.Serializable;
 
+/**
+ * Sent by an elected leader to ask members to accept a message for a given sequence number.
+ */
 public class Accept implements SpecialMessage {
     public long viewNo;
     public long seqNo;

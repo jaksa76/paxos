@@ -2,6 +2,9 @@ package paxos;
 
 import java.io.Serializable;
 
+/**
+ * Entry about an accepted message.
+ */
 public class Acceptance implements Serializable {
     public long viewNumber;
     public Serializable message;

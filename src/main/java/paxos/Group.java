@@ -26,6 +26,8 @@ public class Group implements CommLayer.MessageListener {
     private final GroupMembership membership;
     private final CommLayer commLayer;
 
+    // TODO hide commLayer from the user
+
     public Group(GroupMembership membership, CommLayer commLayer, Receiver receiver) {
         this(membership, commLayer, receiver, System.currentTimeMillis());
     }

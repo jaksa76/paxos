@@ -2,6 +2,9 @@ package paxos;
 
 import java.io.Serializable;
 
+/**
+ * Used by the leader to keep track of proposed messages.
+ */
 public class Proposal {
     Serializable proposedMessage;
     long newestView;
