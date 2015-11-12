@@ -51,11 +51,11 @@ WARNING: The BasicGroup has several limitations, you should use the Dynamic Grou
         group1.close(); group2.close(); group3.close();
 ```
 
-## Fragmenting Group
+### Fragmenting Group
 
 The BasicGroup has one big limitation: it doesn't support messages larger than a UDP packet. Even if you never send large
 messages, the broadcast protocol may use large messages inernally to synchronize state. Large messages are handled by the FragmentingGroup implementation. This implementation has a small overhead (about 10% lower throughput) but supports messages of any size.
 
-## Dynamic Group
+### Dynamic Group
 
 As we said before, our Paxos implementation does not support recovery of members. Instead we support adding new members to the group. In order to take advantage of this you must use the DynamicGroup implementation. State transfer upon joining is left to the user, but we guarantee that every new member receives a continguos subsequence of messages.
