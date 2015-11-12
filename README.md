@@ -19,7 +19,7 @@ This allows us to avoid persistence and have a much higher throughput.
 
 This is the basic group implementation:
 
-'''java
+```java
         // this is the list of members
         Members members = new Members(
                 new Member(), // this is a reference to a member on the localhost on default port (2440)
@@ -45,4 +45,4 @@ This is the basic group implementation:
         Thread.sleep(1); // allow the members to receive the message
 
         group1.close(); group2.close(); group3.close();
-'''
+```
