@@ -24,15 +24,10 @@ public class BasicGroup implements CommLayer.MessageListener {
     private final AcceptorLogic acceptorLogic;
     private final LeaderLogic leaderLogic;
     private final FailureDetector failureDetector;
-    private final GroupMembership membership;
     private final CommLayer commLayer;
 
     public BasicGroup(GroupMembership membership, Receiver receiver) throws SocketException, UnknownHostException {
-        this(membership, new UDPMessenger(), receiver);
-    }
-
-    public BasicGroup(GroupMembership membership, int port, Receiver receiver) throws SocketException, UnknownHostException {
-        this(membership, new UDPMessenger(port), receiver);
+        this(membership, new UDPMessenger(membership.getUID().getPort()), receiver);
     }
 
     public BasicGroup(GroupMembership membership, CommLayer commLayer, Receiver receiver) {
@@ -40,7 +35,6 @@ public class BasicGroup implements CommLayer.MessageListener {
     }
 
     public BasicGroup(GroupMembership membership, CommLayer commLayer, Receiver receiver, long time) {
-        this.membership = membership;
         this.commLayer = commLayer;
 
         leaderLogic = new LeaderLogic(membership, commLayer, time);

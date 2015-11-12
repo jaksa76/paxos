@@ -13,6 +13,10 @@ public class GroupMembership {
     private final Member me;
     private final int positionInGroup;
 
+    public GroupMembership(List<Member> members, int i) {
+        this(members, members.get(i));
+    }
+
     public GroupMembership(List<Member> members, Member me) {
         this.members = members;
         Collections.sort(members);

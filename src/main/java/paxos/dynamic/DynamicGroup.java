@@ -33,6 +33,10 @@ public class DynamicGroup implements Receiver {
     private List<Member> members;
     private MultiListener multiListener = new MultiListener();
 
+    public DynamicGroup(int port, Receiver receiver) throws IOException, InterruptedException {
+        this(new UDPMessenger(), receiver, port, Collections.<Member>emptyList());
+    }
+
     public DynamicGroup(Member knownMember, Receiver receiver) throws IOException, InterruptedException {
         this(new UDPMessenger(), receiver, 2440, Collections.singletonList(knownMember));
     }

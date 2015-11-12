@@ -4,12 +4,21 @@ import com.sun.istack.internal.NotNull;
 
 import java.io.Serializable;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 public class Member implements Comparable<Member>, Serializable {
+    public static final int DEFAULT_PORT = 2440;
     private final InetAddress address;
     private final int port;
     private final byte[] addressBytes;
 
+    public Member() throws UnknownHostException {
+        this(DEFAULT_PORT);
+    }
+
+    public Member(int port) throws UnknownHostException {
+        this(InetAddress.getLocalHost(), port);
+    }
 
     public Member(InetAddress address, int port) {
         this.address = address;

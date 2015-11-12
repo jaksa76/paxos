@@ -5,14 +5,13 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import paxos.communication.Member;
+import paxos.communication.Members;
 import paxos.communication.UDPMessenger;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.net.InetAddress;
+import java.util.*;
 
 import static java.lang.Math.random;
 import static org.mockito.Matchers.any;
@@ -29,6 +28,35 @@ public class BasicGroupIntegrationTest {
             group.close();
         }
         Thread.sleep(500);
+    }
+
+    @Test
+    public void tutorial() throws Exception {
+        // this is the list of members
+        Members members = new Members(
+                new Member(), // this is a reference to a member on the localhost on default port (2440)
+                new Member(2441), // this one is on localhost with the specified port
+                new Member(InetAddress.getLocalHost(), 2442)); // you can specify the address and port manually
+
+        // we need to define a receiver
+        class MyReceiver implements Receiver {
+            // we follow a reactive pattern here
+            public void receive(Serializable message) {
+                System.out.println("received " + message.toString());
+            }
+        };
+
+        // this actually creates the members
+        BasicGroup group1 = new BasicGroup(members.get(0), new MyReceiver());
+        BasicGroup group2 = new BasicGroup(members.get(1), new MyReceiver());
+        BasicGroup group3 = new BasicGroup(members.get(2), new MyReceiver());
+
+        // this will cause all receivers to print "received Hello"
+        group2.broadcast("Hello");
+
+        Thread.sleep(1); // allow the members to receive the message
+
+        group1.close(); group2.close(); group3.close();
     }
 
     @Test

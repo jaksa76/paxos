@@ -5,9 +5,12 @@ import org.junit.Test;
 import paxos.*;
 import paxos.communication.CommLayer;
 import paxos.communication.Member;
+import paxos.communication.Members;
 import paxos.communication.UDPMessenger;
 
 import java.io.IOException;
+import java.io.Serializable;
+import java.net.InetAddress;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
