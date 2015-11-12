@@ -150,6 +150,18 @@ public class BasicGroupTest {
         verify(commLayer).sendTo(eq(newLeader), message(viewAccepted(1)));
     }
 
+    @Test
+    public void testReceivingAMessageReqBeforeBecomingLeader() throws Exception {
+        List<Member> members = TestUtils.createMembersOnLocalhost(3);
+        GroupMembership membership = TestUtils.createMembership(members, 2);
+
+        BasicGroup leader = createGroup(membership);
+        verify(commLayer).sendTo(eq(members), message(instanceOf(NewView.class)));
+
+        leader.receive(PaxosUtils.serialize(new BroadcastRequest("Hello", 42)));
+        verifyNoMoreInteractions(commLayer);
+    }
+
     private Matcher viewAccepted(final long id) {
         return new TypeSafeMatcher<ViewAccepted>() {
             @Override
