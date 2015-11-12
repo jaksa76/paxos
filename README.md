@@ -15,9 +15,13 @@ The original algorithm requires state to be persisted. This significantly reduce
 members to recover. Our solution does not support recovery of members, but instead supports changing the members of the group. 
 This allows us to avoid persistence and have a much higher throughput.
 
-# How to use it?
+## How to use it?
 
-This is the basic group implementation:
+### Basic Group
+
+This is the basic group implementation
+
+WARNING: The BasicGroup has several limitations, you should use the Dynamic Group instead.
 
 ```java
         // this is the list of members
@@ -46,3 +50,12 @@ This is the basic group implementation:
 
         group1.close(); group2.close(); group3.close();
 ```
+
+## Fragmenting Group
+
+The BasicGroup has one big limitation: it doesn't support messages larger than a UDP packet. Even if you never send large
+messages, the broadcast protocol may use large messages inernally to synchronize state. Large messages are handled by the FragmentingGroup implementation. This implementation has a small overhead (about 10% lower throughput) but supports messages of any size.
+
+## Dynamic Group
+
+As we said before, our Paxos implementation does not support recovery of members. Instead we support adding new members to the group. In order to take advantage of this you must use the DynamicGroup implementation. State transfer upon joining is left to the user, but we guarantee that every new member receives a continguos subsequence of messages.
