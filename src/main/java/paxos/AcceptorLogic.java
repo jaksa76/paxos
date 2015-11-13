@@ -9,6 +9,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class AcceptorLogic {
+    public static final long MAX_CIRCULATING_MESSAGES = 1000000l;
     private final GroupMembership membership;
     private final CommLayer messenger;
     private final BufferedReceiver receiver;
@@ -48,7 +49,7 @@ public class AcceptorLogic {
     }
 
     private long createMsgId(Serializable message) {
-        return myPositionInGroup * 1000000l + msgIdGen.incrementAndGet();
+        return myPositionInGroup * MAX_CIRCULATING_MESSAGES + msgIdGen.incrementAndGet() % MAX_CIRCULATING_MESSAGES;
     }
 
     public void dispatch(Serializable message) {
