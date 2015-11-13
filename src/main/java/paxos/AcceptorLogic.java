@@ -20,8 +20,7 @@ public class AcceptorLogic {
     Map<Long, Acceptance> accepted = new HashMap<Long, Acceptance>(); // what we accepted for each seqNo
     private Member leader;
     private long viewNumber;
-    private long tail = -1; // we have received SUCCESS for all messages before tail
-    private Set<Long> undelivered = new HashSet<Long>(); // undelivered SUCCESSFUL messages
+    private MissingMessagesTracker missing = new MissingMessagesTracker(); // missing SUCCESS messages
     private AtomicLong msgIdGen = new AtomicLong(0);
 
 
@@ -79,38 +78,14 @@ public class AcceptorLogic {
             messenger.sendTo(accept.sender, PaxosUtils.serialize(new Abort(accept.viewNo, accept.seqNo)));
         } else {
             accepted.put(accept.seqNo, new Acceptance(accept.viewNo, accept.message, accept.msgId));
-            messenger.sendTo(accept.sender, PaxosUtils.serialize(new Accepted(accept.viewNo, accept.seqNo, accept.msgId, getMissingSuccess(accept.seqNo), me)));
+            messenger.sendTo(accept.sender, PaxosUtils.serialize(new Accepted(accept.viewNo, accept.seqNo, accept.msgId, missing.getMissing(accept.seqNo), me)));
         }
     }
 
     private void onSuccess(Success success) {
         receiver.receive(success.seqNo, success.message);
-        updateTail(success);
+        missing.received(success.seqNo);
         waitingForResponse.unblock(success.msgId);
         messenger.sendTo(leader, PaxosUtils.serialize(new SuccessAck(success.msgId, me)));
-    }
-
-    private void updateTail(Success success) {
-        if (tail == success.seqNo - 1) {
-            tail++;
-            while (!undelivered.isEmpty()) {
-                if (undelivered.contains(tail+1)) {
-                    undelivered.remove(tail + 1);
-                    tail++;
-                } else {
-                    break;
-                }
-            }
-        } else {
-            undelivered.add(success.seqNo);
-        }
-    }
-
-    public Set<Long> getMissingSuccess(long seqNo) {
-        Set<Long> missingSuccess = new HashSet<Long>();
-        for (long i = tail+1; i < seqNo; i++) {
-            if (!undelivered.contains(i)) missingSuccess.add(i);
-        }
-        return missingSuccess;
     }
 }
