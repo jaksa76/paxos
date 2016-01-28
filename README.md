@@ -4,7 +4,7 @@ A Java implementation of Lamport's Paxos algorithm.
 ## Why another Paxos implementation?
 
 This is an implementation of totally ordered atomic broadcast protocol. The algorithm used is a variant of Lamport's Paxos.
-This library is a lightweight alternative to Apache Zookeper. Zookeper uses Paxos to keep consistency among the replicas, 
+This library is a lightweight alternative to Apache Zookeeper. Zookeeper uses Paxos to keep consistency among the replicas,
 but the clients are remote. This poses several limits to how Zookeeper can be used.
 Our library is used from within the VM and clients can use it to build replication with strong consistency guarantees 
 regardless of how state is represented.
@@ -53,9 +53,13 @@ WARNING: The BasicGroup has several limitations, you should use the Dynamic Grou
 
 ### Fragmenting Group
 
-The BasicGroup has one big limitation: it doesn't support messages larger than a UDP packet. Even if you never send large
-messages, the broadcast protocol may use large messages inernally to synchronize state. Large messages are handled by the FragmentingGroup implementation. This implementation has a small overhead (about 10% lower throughput) but supports messages of any size.
+The BasicGroup has one big limitation: it doesn't support messages larger than a UDP packet. Even if you never send
+large messages, the broadcast protocol may use large messages internally to synchronize state. Large messages are
+handled by the FragmentingGroup implementation. This implementation has a small overhead (about 10% lower throughput),
+but supports messages of any size.
 
 ### Dynamic Group
 
-As we said before, our Paxos implementation does not support recovery of members. Instead we support adding new members to the group. In order to take advantage of this you must use the DynamicGroup implementation. State transfer upon joining is left to the user, but we guarantee that every new member receives a continguos subsequence of messages.
+As we said before, our Paxos implementation does not support recovery of members. Instead we support adding new members
+to the group. In order to take advantage of this you must use the DynamicGroup implementation. State transfer upon
+joining is left to the user, but we guarantee that every new member receives a continguous subsequence of messages.
