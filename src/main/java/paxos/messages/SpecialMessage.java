@@ -1,7 +1,5 @@
 package paxos.messages;
 
-import sun.plugin2.message.Message;
-
 import java.io.Serializable;
 
 public interface SpecialMessage extends Serializable {

@@ -2,6 +2,7 @@ package paxos;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import paxos.communication.Member;
@@ -44,7 +45,7 @@ public class BasicGroupIntegrationTest {
             public void receive(Serializable message) {
                 System.out.println("received " + message.toString());
             }
-        };
+        }
 
         // this actually creates the members
         BasicGroup group1 = new BasicGroup(members.get(0), new MyReceiver());
@@ -116,7 +117,9 @@ public class BasicGroupIntegrationTest {
         }
     }
 
-    @Test public void testKillingTheLeader() throws Exception {
+    @Test
+    @Ignore
+    public void testKillingTheLeader() throws Exception {
         int groupSize = 5;
         List<Member> members = createMembersOnLocalhost(groupSize);
         Receiver[] receivers = createReceivers(groupSize);
@@ -203,7 +206,7 @@ public class BasicGroupIntegrationTest {
 
     public static class CalculatingReceiver implements Receiver {
         public double value = 1.0;
-        public long messages = 0l;
+        public long messages = 0L;
         private long start = System.currentTimeMillis();
         public synchronized void receive(Serializable message) {
             if (message.equals("+1")) value += 1.0;
@@ -218,7 +221,7 @@ public class BasicGroupIntegrationTest {
     }
 
     public static class CountingReceiver implements Receiver {
-        public long msgCount = 0l;
+        public long msgCount = 0L;
         public List<String> messages = new ArrayList<String>();
         public synchronized void receive(Serializable message) {
             msgCount++;

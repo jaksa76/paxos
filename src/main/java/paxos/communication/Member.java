@@ -1,10 +1,9 @@
 package paxos.communication;
 
-import com.sun.istack.internal.NotNull;
-
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import javax.validation.constraints.NotNull;
 
 public class Member implements Comparable<Member>, Serializable {
     public static final int DEFAULT_PORT = 2440;
@@ -55,8 +54,7 @@ public class Member implements Comparable<Member>, Serializable {
 
         Member member = (Member) o;
 
-        if (port != member.port) return false;
-        return address.equals(member.address);
+        return (port == member.port) && address.equals (member.address);
     }
 
     @Override

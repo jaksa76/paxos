@@ -2,6 +2,7 @@ package paxos.fragmentation;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import paxos.PaxosUtils;
@@ -85,6 +86,7 @@ public class FragmentingGroupIntegrationTest {
     }
 
     @Test
+    @Ignore
     public void testTransmittingLongMessages() throws Exception {
         List<Member> members = createMembersOnLocalhost(GROUP_SIZE);
         Receiver[] receivers = createReceivers(GROUP_SIZE);
@@ -124,7 +126,7 @@ public class FragmentingGroupIntegrationTest {
     }
 
     public static class CountingReceiver implements Receiver {
-        public long msgCount = 0l;
+        public long msgCount = 0L;
         public synchronized void receive(Serializable message) {
             System.out.println(".");
             msgCount++;
