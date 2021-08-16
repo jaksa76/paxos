@@ -28,7 +28,8 @@ public class BasicGroupIntegrationTest {
         for (BasicGroup group : groups) {
             group.close();
         }
-        Thread.sleep(500);
+        Thread.sleep(3000);
+        groups.clear();
     }
 
     @Test

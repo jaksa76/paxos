@@ -8,6 +8,15 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Represents the behaviours of non-leaders of the group. The leader will perform this logic as well.
+ * An acceptor can receive these messages:
+ * <ul>
+ *  <li>NEW_VIEW: a member is asking to become the leader</li>
+ *  <li>ACCEPT: the leader (or a member thinking it is a leader) asks members to accept a message</li>
+ *  <li>SUCCESS: the leader is telling us that a majority of members have accepted the message</li>
+ * </ul>
+ */
 public class AcceptorLogic {
     public static final long MAX_CIRCULATING_MESSAGES = 1000000l;
     private final GroupMembership membership;
@@ -33,6 +42,13 @@ public class AcceptorLogic {
         this.leader = me;
     }
 
+    /**
+     * Invoked when a client wants to send a message to the group. Regardless of whether this member is the leader,
+     * a message will be sent to the leader to request a consensus algorithm to be initiated and the thread will block until
+     * the consensus completes.
+     *
+     * @param message the message to be broadcast
+     */
     public void broadcast(Serializable message) {
         long msgId = createMsgId(message);
         boolean broadcastSuccessful = false;
@@ -51,6 +67,11 @@ public class AcceptorLogic {
         return myPositionInGroup * MAX_CIRCULATING_MESSAGES + msgIdGen.incrementAndGet() % MAX_CIRCULATING_MESSAGES;
     }
 
+    /**
+     * Invoked when a message is received from a group member (could be oneself).
+     *
+     * @param message
+     */
     public void dispatch(Serializable message) {
         if (message instanceof SpecialMessage) {
             SpecialMessage specialMessage = (SpecialMessage) message;
@@ -62,6 +83,12 @@ public class AcceptorLogic {
         }
     }
 
+    /**
+     * A members is asking us to vote for him as the new leader. We will accept only if his viewNumber is higher than
+     * the current one.
+     *
+     * @param newView
+     */
     private void onNewView(NewView newView) {
         if (newView.viewNumber > viewNumber) {
             System.out.println(me + ": setting leader to " + newView.leader);
@@ -73,6 +100,11 @@ public class AcceptorLogic {
         }
     }
 
+    /**
+     * A member that believes to be a leader is asking us to accept a message. If it is an old leader, we will reject.
+     *
+     * @param accept
+     */
     private void onAccept(Accept accept) {
         if (accept.viewNo < viewNumber) {
             messenger.sendTo(accept.sender, PaxosUtils.serialize(new Abort(accept.viewNo, accept.seqNo)));
@@ -82,6 +114,12 @@ public class AcceptorLogic {
         }
     }
 
+    /**
+     * The leader is telling us that a majority has accepted a message. If there is a client waiting for consensus to
+     * complete, we unblock it. We also tell the leader that we got the success message, so it can do garbage collection.
+     *
+     * @param success
+     */
     private void onSuccess(Success success) {
         receiver.receive(success.seqNo, success.message);
         missing.received(success.seqNo);

@@ -36,14 +36,19 @@ public class BasicGroup implements CommLayer.MessageListener {
 
     public BasicGroup(GroupMembership membership, CommLayer commLayer, Receiver receiver, long time) {
         this.commLayer = commLayer;
-
-        leaderLogic = new LeaderLogic(membership, commLayer, time);
-        acceptorLogic = new AcceptorLogic(membership, commLayer, receiver);
-        failureDetector = new FailureDetector(membership, commLayer, leaderLogic);
+        this.leaderLogic = new LeaderLogic(membership, commLayer, time);
+        this.acceptorLogic = new AcceptorLogic(membership, commLayer, receiver);
+        this.failureDetector = new FailureDetector(membership, commLayer, leaderLogic);
 
         this.commLayer.setListener(this);
     }
 
+    /**
+     * Invoked by the client to reliably broadcast a message to all members. Blocks until consensus is reached with
+     * other members of the group.
+     *
+     * @param message
+     */
     public void broadcast(Serializable message) {
         acceptorLogic.broadcast(message);
     }
@@ -58,6 +63,10 @@ public class BasicGroup implements CommLayer.MessageListener {
         failureDetector.dispatch(message);
     }
 
+    /**
+     * Will be invoked by the @{@link CommLayer} upon receiving a message.
+     * @param message
+     */
     public void receive(byte[] message) {
         dispatch((Serializable) PaxosUtils.deserialize(message));
     }

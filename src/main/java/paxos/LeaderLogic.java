@@ -8,6 +8,17 @@ import paxos.messages.*;
 import java.io.Serializable;
 import java.util.*;
 
+/**
+ * The part that implements the logic of the leader.
+ *
+ * When a member thinks it should be a leader will start an election.
+ * This consists in sending a NEW_VIEW message to all members and collecting the responses. If a majority of members
+ * responds with a VIEW_ACCEPTED, the member becomes the leader. Responses are collected through the MultiRequest.
+ *
+ * When a member asks for a message to be broadcast, the leader will send an ACCEPT message to all members. Members will
+ * either respond with ACCEPTED or ABORT in case there is a newer leader. If a majority of members responds with
+ * ACCEPTED, we will broadcast the SUCCESS message to let the members know of the consensus outcome.
+ */
 public class LeaderLogic implements FailureListener {
     private static final NoOp NO_OP = new NoOp();
     private final GroupMembership membership;
@@ -35,6 +46,11 @@ public class LeaderLogic implements FailureListener {
         }
     }
 
+    /**
+     * Invoked when a message is received from a member of the group.
+     *
+     * @param message
+     */
     public synchronized void dispatch(Serializable message) {
         if (message instanceof SpecialMessage) {
             SpecialMessage specialMessage = (SpecialMessage) message;
