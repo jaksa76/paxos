@@ -1,9 +1,6 @@
 package paxos;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 import org.mockito.Mockito;
 import paxos.communication.Member;
 import paxos.communication.Members;
@@ -22,14 +19,17 @@ import static org.mockito.Mockito.verify;
 import static paxos.TestUtils.*;
 
 public class BasicGroupIntegrationTest {
-    private final Set<BasicGroup> groups = new HashSet<BasicGroup>();
+    private Set<BasicGroup> groups = new HashSet<BasicGroup>();
+
+    @Before public void setUp() {
+        this.groups = new HashSet<>();
+    }
 
     @After public void tearDown() throws InterruptedException {
         for (BasicGroup group : groups) {
             group.close();
         }
         Thread.sleep(3000);
-        groups.clear();
     }
 
     @Test
